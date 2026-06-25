@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хроники Азерота - Временная линия Warcraft</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Фоновые эффекты -->
+    <div class="background-effects">
+        <div class="magic-particles"></div>
+        <div class="arcane-mist"></div>
+    </div>
+
+    <!-- Хэдер без изображения -->
+    <header class="main-header">
+        <div class="header-background">
+            <div class="header-pattern"></div>
+            <div class="header-overlay"></div>
+        </div>
+        <div class="header-content">
+            <h1 class="site-title">
+                <span class="rune-symbol">⚡</span>
+                Хроники Азерота
+                <span class="rune-symbol">⚡</span>
+            </h1>
+            <p class="site-subtitle">Временная линия мира Warcraft</p>
+        </div>
+    </header>
+
+    <!-- Навигационная панель -->
+    <nav class="top-navigation">
+        <div class="nav-container">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-page="events">События</button>
+                <button class="nav-tab" data-page="characters">Персонажи</button>
+            </div>
+            <!-- Кнопка режима редактирования -->
+            <button class="edit-mode-btn" id="editModeBtn" title="Режим редактирования">
+                <span class="edit-icon">✏️</span>
+                <span class="edit-text">Редактировать</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Контейнер страниц -->
+    <div class="page-container">
+        <!-- Страница событий -->
+        <div class="page-content active" id="eventsPage">
+            <div class="timeline-container">
+                <!-- Центральная линия времени -->
+                <div class="timeline-line"></div>
+                
+                <!-- События таймлинии -->
+                <div class="timeline-events">
+                    <!-- Пример события слева -->
+                    <div class="timeline-event left">
+                        <div class="event-card">
+                            <h3>Создание мира</h3>
+                            <span class="event-year">~200,000 лет до ОВ</span>
+                        </div>
+                    </div>
+
+                    <!-- Пример события справа -->
+                    <div class="timeline-event right" data-category="wars" data-year="-10000">
+                        <div class="event-card">
+                            <h3>Война Древних</h3>
+                            <span class="event-year">~10,000 лет до ОВ</span>
+                        </div>
+                    </div>
+
+                    <!-- Пример события слева -->
+                    <div class="timeline-event left" data-category="characters" data-year="-3000">
+                        <div class="event-card">
+                            <h3>Основание Кель'Таласа</h3>
+                            <span class="event-year">~3,000 лет до ОВ</span>
+                        </div>
+                    </div>
+
+                    <!-- Пример события справа -->
+                    <div class="timeline-event right" data-category="wars" data-year="0">
+                        <div class="event-card">
+                            <h3>Первая война</h3>
+                            <span class="event-year">0-6 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <!-- Пример события слева -->
+                    <div class="timeline-event left" data-category="artifacts" data-year="25">
+                        <div class="event-card">
+                            <h3>Разрушение Камня Душ</h3>
+                            <span class="event-year">25 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <!-- Новые события -->
+                    <div class="timeline-event right" data-category="wars" data-year="20">
+                        <div class="event-card">
+                            <h3>Вторая война</h3>
+                            <span class="event-year">6-8 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="characters" data-year="21">
+                        <div class="event-card">
+                            <h3>Рождение Артаса</h3>
+                            <span class="event-year">-10 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="wars" data-year="22">
+                        <div class="event-card">
+                            <h3>Третья война</h3>
+                            <span class="event-year">20-22 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="artifacts" data-year="23">
+                        <div class="event-card">
+                            <h3>Создание Ледяной Скорби</h3>
+                            <span class="event-year">20 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="characters" data-year="24">
+                        <div class="event-card">
+                            <h3>Падение Артаса</h3>
+                            <span class="event-year">22 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="wars" data-year="26">
+                        <div class="event-card">
+                            <h3>Битва за Гору Хиджал</h3>
+                            <span class="event-year">22 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="characters" data-year="27">
+                        <div class="event-card">
+                            <h3>Освобождение Иллидана</h3>
+                            <span class="event-year">22 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="artifacts" data-year="28">
+                        <div class="event-card">
+                            <h3>Разрушение Ледяной Короны</h3>
+                            <span class="event-year">25 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="wars" data-year="29">
+                        <div class="event-card">
+                            <h3>Вторжение в Запределье</h3>
+                            <span class="event-year">25-27 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="characters" data-year="30">
+                        <div class="event-card">
+                            <h3>Смерть Иллидана</h3>
+                            <span class="event-year">27 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="wars" data-year="31">
+                        <div class="event-card">
+                            <h3>Война против Короля-лича</h3>
+                            <span class="event-year">27-30 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="characters" data-year="32">
+                        <div class="event-card">
+                            <h3>Смерть Артаса</h3>
+                            <span class="event-year">30 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="artifacts" data-year="33">
+                        <div class="event-card">
+                            <h3>Катаклизм Смертокрыла</h3>
+                            <span class="event-year">28 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="wars" data-year="34">
+                        <div class="event-card">
+                            <h3>Война в Пандарии</h3>
+                            <span class="event-year">30-31 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="characters" data-year="35">
+                        <div class="event-card">
+                            <h3>Падение Гарроша</h3>
+                            <span class="event-year">31 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="wars" data-year="36">
+                        <div class="event-card">
+                            <h3>Железная Орда</h3>
+                            <span class="event-year">31-32 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="wars" data-year="37">
+                        <div class="event-card">
+                            <h3>Вторжение Легиона</h3>
+                            <span class="event-year">32-33 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event left" data-category="characters" data-year="38">
+                        <div class="event-card">
+                            <h3>Возвращение Иллидана</h3>
+                            <span class="event-year">32 год ОВ</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event right" data-category="wars" data-year="39">
+                        <div class="event-card">
+                            <h3>Война за Азерот</h3>
+                            <span class="event-year">33-35 год ОВ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница персонажей -->
+        <div class="page-content" id="charactersPage">
+            <div class="characters-container">
+                <h2 class="page-title">Архив Персонажей</h2>
+                <div class="characters-grid">
+                    <!-- Карточка Артаса -->
+                    <div class="character-card" data-character="arthas">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/4fc3f7/ffffff?text=Артас" alt="Артас">
+                        </div>
+                        <div class="character-info">
+                            <h3>Артас Менетил</h3>
+                            <span class="character-title">Король-лич</span>
+                            <p class="character-brief">Принц Лордерона, ставший Королём-личом после слияния с Нер'зулом.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Иллидана -->
+                    <div class="character-card" data-character="illidan">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/32cd32/ffffff?text=Иллидан" alt="Иллидан">
+                        </div>
+                        <div class="character-info">
+                            <h3>Иллидан Ярость Бури</h3>
+                            <span class="character-title">Охотник на демонов</span>
+                            <p class="character-brief">Первый охотник на демонов, брат Малфуриона, заключённый на 10,000 лет.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Тралла -->
+                    <div class="character-card" data-character="thrall">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/ffd700/000000?text=Тралл" alt="Тралл">
+                        </div>
+                        <div class="character-info">
+                            <h3>Тралл</h3>
+                            <span class="character-title">Вождь Орды</span>
+                            <p class="character-brief">Освободитель орков, основатель новой Орды, шаман стихий.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Джайны -->
+                    <div class="character-card" data-character="jaina">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/87ceeb/000000?text=Джайна" alt="Джайна">
+                        </div>
+                        <div class="character-info">
+                            <h3>Джайна Праудмур</h3>
+                            <span class="character-title">Архимаг Кул-Тираса</span>
+                            <p class="character-brief">Могущественная волшебница, правительница Кул-Тираса, защитница Азерота.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Сильваны -->
+                    <div class="character-card" data-character="sylvanas">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/800080/ffffff?text=Сильвана" alt="Сильвана">
+                        </div>
+                        <div class="character-info">
+                            <h3>Сильвана Ветрокрылая</h3>
+                            <span class="character-title">Тёмная Госпожа</span>
+                            <p class="character-brief">Бывший рейнджер-генерал, ставшая банши и вождём Отрёкшихся.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Малфуриона -->
+                    <div class="character-card" data-character="malfurion">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/228b22/ffffff?text=Малфурион" alt="Малфурион">
+                        </div>
+                        <div class="character-info">
+                            <h3>Малфурион Ярость Бури</h3>
+                            <span class="character-title">Архидруид</span>
+                            <p class="character-brief">Первый друид, защитник природы, брат Иллидана и возлюбленный Тиранды.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Тиранды -->
+                    <div class="character-card" data-character="tyrande">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/c0c0c0/000000?text=Тиранда" alt="Тиранда">
+                        </div>
+                        <div class="character-info">
+                            <h3>Тиранда Шелест Ветра</h3>
+                            <span class="character-title">Верховная Жрица Элуны</span>
+                            <p class="character-brief">Лидер ночных эльфов, жрица богини луны Элуны, возлюбленная Малфуриона.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Вариана -->
+                    <div class="character-card" data-character="varian">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/4169e1/ffffff?text=Вариан" alt="Вариан">
+                        </div>
+                        <div class="character-info">
+                            <h3>Вариан Ринн</h3>
+                            <span class="character-title">Король Штормграда</span>
+                            <p class="character-brief">Король Штормграда, лидер Альянса, отец Андуина, павший герой.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Гарроша -->
+                    <div class="character-card" data-character="garrosh">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/8b4513/ffffff?text=Гаррош" alt="Гаррош">
+                        </div>
+                        <div class="character-info">
+                            <h3>Гаррош Адский Крик</h3>
+                            <span class="character-title">Бывший Вождь Орды</span>
+                            <p class="character-brief">Сын Громмаша, бывший вождь Орды, ставший тираном и военным преступником.</p>
+                        </div>
+                    </div>
+
+                    <!-- Карточка Кель'таса -->
+                    <div class="character-card" data-character="kaelthas">
+                        <div class="character-portrait">
+                            <img src="https://via.placeholder.com/150x200/ff6347/ffffff?text=Кель'тас" alt="Кель'тас">
+                        </div>
+                        <div class="character-info">
+                            <h3>Кель'тас Солнечный Скиталец</h3>
+                            <span class="character-title">Принц эльфов крови</span>
+                            <p class="character-brief">Последний принц Кель'Таласа, ставший слугой Иллидана и Легиона.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно-свиток -->
+    <div class="scroll-modal" id="scrollModal">
+        <div class="scroll-overlay"></div>
+        <div class="scroll-container">
+            <div class="scroll-content">
+                <button class="scroll-close">✕</button>
+                <div class="scroll-header">
+                    <div class="scroll-seal"></div>
+                    <h2 class="scroll-title">Заголовок события</h2>
+                    <div class="scroll-divider"></div>
+                </div>
+                <div class="scroll-body">
+                    <div class="content-section">
+                        <h3>Описание</h3>
+                        <p>Здесь будет подробное описание события...</p>
+                    </div>
+                    <div class="content-section">
+                        <h3>Изображения</h3>
+                        <div class="image-gallery">
+                            <!-- Изображения будут добавляться динамически -->
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <h3>Видеоматериалы</h3>
+                        <div class="video-links">
+                            <!-- Ссылки на видео будут добавляться динамически -->
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <h3>Заметки</h3>
+                        <div class="notes">
+                            <!-- Заметки будут добавляться динамически -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно персонажа -->
+    <div class="character-modal" id="characterModal">
+        <div class="character-modal-overlay"></div>
+        <div class="character-modal-container">
+            <div class="character-modal-content">
+                <button class="character-modal-close">✕</button>
+                <div class="character-modal-header">
+                    <div class="character-modal-portrait">
+                        <img src="" alt="" id="modalCharacterPortrait">
+                    </div>
+                    <div class="character-modal-title">
+                        <h2 id="modalCharacterName">Имя персонажа</h2>
+                        <span id="modalCharacterTitle" class="character-modal-subtitle">Титул</span>
+                    </div>
+                </div>
+                <div class="character-modal-body">
+                    <div class="character-modal-section">
+                        <h3>Биография</h3>
+                        <div id="modalCharacterBio" class="character-bio-content">
+                            <!-- Биография будет добавлена динамически -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования события -->
+    <div class="edit-event-modal" id="editEventModal">
+        <div class="edit-modal-overlay"></div>
+        <div class="edit-modal-container">
+            <div class="edit-modal-content">
+                <button class="edit-modal-close">✕</button>
+                <div class="edit-modal-header">
+                    <h2 id="editModalTitle">Добавить событие</h2>
+                </div>
+                <form class="edit-event-form" id="editEventForm">
+                    <div class="form-group">
+                        <label for="eventTitle">Название события:</label>
+                        <input type="text" id="eventTitle" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventYear">Год события:</label>
+                        <input type="text" id="eventYear" name="year" placeholder="например: 25 год ОВ" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventPosition">Позиция на таймлинии:</label>
+                        <select id="eventPosition" name="position" required>
+                            <option value="left">Слева</option>
+                            <option value="right">Справа</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventDescription">Описание:</label>
+                        <textarea id="eventDescription" name="description" rows="6" placeholder="Подробное описание события..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventImages">Изображения (URL, по одному на строку):</label>
+                        <textarea id="eventImages" name="images" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventVideos">Видео (название|URL, по одному на строку):</label>
+                        <textarea id="eventVideos" name="videos" rows="3" placeholder="Название видео|https://youtube.com/watch?v=...&#10;Другое видео|https://youtube.com/watch?v=..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventBooks">Связанные книги (название|URL обложки, по одному на строку):</label>
+                        <textarea id="eventBooks" name="books" rows="3" placeholder="Warcraft Chronicle Volume 1|https://example.com/cover1.jpg&#10;Артас: Восхождение Короля-лича|https://example.com/cover2.jpg&#10;Название книги|📚 (если нет изображения)"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventGames">Игры (по одной на строку):</label>
+                        <textarea id="eventGames" name="games" rows="2" placeholder="Warcraft III&#10;World of Warcraft"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventCharacters">Персонажи (по одному на строку):</label>
+                        <textarea id="eventCharacters" name="characters" rows="2" placeholder="Артас&#10;Джайна"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventNotes">Заметки:</label>
+                        <textarea id="eventNotes" name="notes" rows="2" placeholder="Дополнительные заметки..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="save-btn">Сохранить</button>
+                        <button type="button" class="cancel-btn" id="cancelEdit">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопка добавления события (показывается в режиме редактирования) -->
+    <button class="add-event-btn" id="addEventBtn" style="display: none;">
+        <span class="add-icon">+</span>
+        <span class="add-text">Добавить событие</span>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>

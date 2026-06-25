@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+
+# Мастер-контент в Apple Pages (тяжёлые бинарники ~23 МБ) — данные сайта живут в src/data/*.json
+*.pages
+
+# Артефакты сборки TypeScript
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
