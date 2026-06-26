@@ -54,6 +54,7 @@ export default function App() {
   const isData = page === 'events' || page === 'characters' || page === 'zones';
   const [editMode, setEditMode] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
   const [authMsg, setAuthMsg] = useState('');
 
   // запись датасета в облако (только для вошедших редакторов)
@@ -128,8 +129,9 @@ export default function App() {
   };
 
   const handleSignIn = async () => {
-    const r = await auth.signIn(authEmail);
+    const r = await auth.signIn(authEmail, authPassword);
     setAuthMsg(r.message);
+    if (r.ok) setAuthPassword('');
   };
 
   const exportCurrent = () => {
@@ -320,15 +322,26 @@ export default function App() {
               ) : (
                 <>
                   <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
-                    Чтобы сохранять правки в общее облако, войди по e-mail (ссылка придёт на почту):
+                    Чтобы сохранять правки в общее облако, войди (логин-пароль выдаёт владелец):
                   </span>
                   <input
                     className="search-input"
-                    style={{ minWidth: 220 }}
+                    style={{ minWidth: 180 }}
                     type="email"
                     placeholder="you@example.com"
+                    autoComplete="username"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
+                  />
+                  <input
+                    className="search-input"
+                    style={{ minWidth: 150 }}
+                    type="password"
+                    placeholder="пароль"
+                    autoComplete="current-password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
                   />
                   <button className="icon-btn active" onClick={handleSignIn}>
                     Войти
