@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Character } from '../data/types';
+import { assetUrl } from '../utils/asset';
 
 interface Props {
   characters: Character[];
@@ -45,7 +46,7 @@ export default function CharactersPage({ characters, onSelect }: Props) {
           >
             <div className="character-portrait">
               {c.portrait ? (
-                <img src={c.portrait} alt={c.name} />
+                <img src={assetUrl(c.portrait)} alt={c.name} />
               ) : (
                 <span className="portrait-fallback">{c.name.charAt(0)}</span>
               )}

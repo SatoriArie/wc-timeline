@@ -1,5 +1,6 @@
 import type { Character, RelationKind, TimelineEvent } from '../data/types';
 import Modal from './Modal';
+import { assetUrl } from '../utils/asset';
 
 interface RelationView {
   character: Character;
@@ -39,7 +40,7 @@ export default function CharacterModal({
           <div className="modal-divider" />
 
           {character.portrait ? (
-            <img className="modal-portrait" src={character.portrait} alt={character.name} />
+            <img className="modal-portrait" src={assetUrl(character.portrait)} alt={character.name} />
           ) : null}
 
           <section>

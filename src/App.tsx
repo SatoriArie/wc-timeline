@@ -167,15 +167,22 @@ export default function App() {
     }
   };
 
-  // открыть нужный контент при загрузке (по снимку) и по навигации назад/вперёд
+  // слушатель навигации назад/вперёд
   useEffect(() => {
-    applyHash(bootHash.current);
-    linkReady.current = true;
     const onHash = () => applyHash(parseHash());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // применить дип-линк один раз, когда данные загружены (нужны для поиска сущности по id)
+  useEffect(() => {
+    if (c.status === 'ready' && !linkReady.current) {
+      applyHash(bootHash.current);
+      linkReady.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c.status]);
 
   // отражать текущее состояние в URL (без замусоривания истории)
   useEffect(() => {
@@ -250,7 +257,7 @@ export default function App() {
             <span>Режим редактирования.</span>
             <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
               Клик по карточке — правка. Изменения хранятся локально; для публикации жми «Экспорт» и
-              положи <code>{dataFile}</code> в <code>src/data/</code>.
+              положи <code>{dataFile}</code> в <code>public/data/</code>.
             </span>
             <button className="icon-btn" onClick={exportCurrent}>
               ⬇ Экспорт {dataFile}
@@ -273,7 +280,25 @@ export default function App() {
           </div>
         )}
 
-        {page === 'home' && (
+        {c.status === 'loading' && (
+          <div className="loader">
+            <span className="loader-rune">✦</span>
+            <p>Раскрываем хроники Азерота…</p>
+          </div>
+        )}
+        {c.status === 'error' && (
+          <div className="empty-state">
+            <p>Не удалось загрузить летопись.</p>
+            <code style={{ color: 'var(--horde)' }}>{c.error}</code>
+            <p>
+              <button className="icon-btn active" onClick={() => location.reload()}>
+                Попробовать снова
+              </button>
+            </p>
+          </div>
+        )}
+
+        {c.status === 'ready' && page === 'home' && (
           <HomePage
             events={c.events}
             characters={c.characters}
@@ -282,14 +307,16 @@ export default function App() {
             onOpenEvent={(e) => setActiveEvent(e)}
           />
         )}
-        {page === 'events' && <EventsPage events={c.events} onSelect={openForView.events} />}
-        {page === 'characters' && (
+        {c.status === 'ready' && page === 'events' && (
+          <EventsPage events={c.events} onSelect={openForView.events} />
+        )}
+        {c.status === 'ready' && page === 'characters' && (
           <CharactersPage characters={c.characters} onSelect={openForView.characters} />
         )}
-        {page === 'zones' && (
+        {c.status === 'ready' && page === 'zones' && (
           <ZonesPage zones={c.zones} onSelect={openForView.zones} initialRegion={pendingRegion} />
         )}
-        {page === 'map' && (
+        {c.status === 'ready' && page === 'map' && (
           <MapPage
             zones={c.zones}
             onSelectRegion={(r) => {

@@ -1179,6 +1179,53 @@ a {
   font-size: 1.1rem;
 }
 
+/* загрузчик */
+.loader {
+  text-align: center;
+  padding: 90px 20px;
+  color: var(--rune-glow);
+}
+.loader-rune {
+  display: block;
+  font-size: 2.6rem;
+  color: var(--titan-gold);
+  filter: drop-shadow(0 0 14px rgba(255, 207, 87, 0.7));
+  animation: runeGlow 1.6s ease-in-out infinite;
+  margin-bottom: 14px;
+}
+.loader p { font-style: italic; letter-spacing: 0.5px; }
+
+/* экран ошибки (error boundary) */
+.boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.boundary-card {
+  max-width: 520px;
+  text-align: center;
+  background: var(--panel-grad);
+  border: 1px solid var(--panel-border-hot);
+  border-radius: 16px;
+  padding: 36px 30px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.boundary-card .rune-symbol { font-size: 2rem; }
+.boundary-card h2 { font-family: var(--font-head); color: var(--gold-bright); margin: 12px 0 8px; }
+.boundary-card p { color: rgba(225, 230, 240, 0.8); margin-bottom: 14px; }
+.boundary-card code {
+  display: block;
+  background: rgba(0, 0, 0, 0.35);
+  color: #ff9b8f;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 18px;
+  word-break: break-word;
+}
+
 .edit-form { display: flex; flex-direction: column; gap: 14px; }
 .form-row { display: flex; flex-direction: column; gap: 5px; }
 .form-row span { font-family: var(--font-head); font-size: 0.9rem; color: #6d3f12; }

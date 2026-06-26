@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Character, TimelineEvent, Zone } from '../data/types';
-import { characters as baseCharacters, events as baseEvents, zones as baseZones } from '../data';
+import { fetchContent, type Content } from '../data';
 
 const LS_KEY = 'wc-timeline-draft-v2';
 
@@ -19,31 +19,94 @@ function loadDraft(): Draft {
   }
 }
 
+export type LoadStatus = 'loading' | 'ready' | 'error';
+
 /**
- * Управляет контентом сайта. Источник истины — JSON-файлы в репозитории,
- * но в режиме редактирования правки хранятся черновиком в localStorage,
- * чтобы не теряться. Экспорт отдаёт готовый JSON для коммита в репозиторий.
+ * Загружает контент рантаймом (из public/data; позже — из Supabase).
+ * Правки хранятся черновиком в localStorage; источник правды — внешние данные.
  */
 export function useContent() {
-  const draft = loadDraft();
-  const [events, setEvents] = useState<TimelineEvent[]>(draft.events ?? baseEvents);
-  const [characters, setCharacters] = useState<Character[]>(draft.characters ?? baseCharacters);
-  const [zones, setZones] = useState<Zone[]>(draft.zones ?? baseZones);
+  const [status, setStatus] = useState<LoadStatus>('loading');
+  const [error, setError] = useState('');
+  const [events, setEventsRaw] = useState<TimelineEvent[]>([]);
+  const [characters, setCharactersRaw] = useState<Character[]>([]);
+  const [zones, setZonesRaw] = useState<Zone[]>([]);
+
+  const repo = useRef<Content | null>(null);
+  const loaded = useRef(false);
+  const dirty = useRef(false);
 
   useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones }));
-  }, [events, characters, zones]);
-
-  const resetToRepo = useCallback(() => {
-    localStorage.removeItem(LS_KEY);
-    setEvents(baseEvents);
-    setCharacters(baseCharacters);
-    setZones(baseZones);
+    let alive = true;
+    fetchContent()
+      .then((content) => {
+        if (!alive) return;
+        repo.current = content;
+        const draft = loadDraft();
+        setEventsRaw(draft.events ?? content.events);
+        setCharactersRaw(draft.characters ?? content.characters);
+        setZonesRaw(draft.zones ?? content.zones);
+        loaded.current = true;
+        setStatus('ready');
+      })
+      .catch((e) => {
+        if (!alive) return;
+        setError(String(e?.message || e));
+        setStatus('error');
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const hasDraft = !!localStorage.getItem(LS_KEY);
+  // сохраняем черновик только после правок пользователя
+  useEffect(() => {
+    if (!loaded.current || !dirty.current) return;
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones }));
+    } catch {
+      /* квота/приватный режим — игнорируем */
+    }
+  }, [events, characters, zones]);
+
+  const setEvents = useCallback((u: React.SetStateAction<TimelineEvent[]>) => {
+    dirty.current = true;
+    setEventsRaw(u);
+  }, []);
+  const setCharacters = useCallback((u: React.SetStateAction<Character[]>) => {
+    dirty.current = true;
+    setCharactersRaw(u);
+  }, []);
+  const setZones = useCallback((u: React.SetStateAction<Zone[]>) => {
+    dirty.current = true;
+    setZonesRaw(u);
+  }, []);
+
+  const resetToRepo = useCallback(() => {
+    try {
+      localStorage.removeItem(LS_KEY);
+    } catch {
+      /* ignore */
+    }
+    dirty.current = false;
+    if (repo.current) {
+      setEventsRaw(repo.current.events);
+      setCharactersRaw(repo.current.characters);
+      setZonesRaw(repo.current.zones);
+    }
+  }, []);
+
+  const hasDraft = (() => {
+    try {
+      return !!localStorage.getItem(LS_KEY);
+    } catch {
+      return false;
+    }
+  })();
 
   return {
+    status,
+    error,
     events,
     characters,
     zones,
@@ -55,7 +118,7 @@ export function useContent() {
   };
 }
 
-/** Скачивает данные как JSON-файл для коммита в src/data. */
+/** Скачивает данные как JSON-файл для коммита в public/data. */
 export function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

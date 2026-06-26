@@ -2,6 +2,7 @@ import type { Character, TimelineEvent } from '../data/types';
 import Modal from './Modal';
 import { renderDescription } from '../utils/linkify';
 import { SOURCE_LABEL, SourceIcon } from './icons';
+import { assetUrl } from '../utils/asset';
 
 interface Props {
   event: TimelineEvent | null;
@@ -57,7 +58,7 @@ export default function EventModal({
               <h3>Изображения</h3>
               <div className="cards-grid">
                 {event.images.map((src, i) => (
-                  <img key={i} src={src} alt={event.title} style={{ width: '100%', borderRadius: 8 }} />
+                  <img key={i} src={assetUrl(src)} alt={event.title} style={{ width: '100%', borderRadius: 8 }} />
                 ))}
               </div>
             </section>
