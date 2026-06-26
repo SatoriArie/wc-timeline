@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Character, PageId, TimelineEvent, Zone } from './data/types';
 import { downloadJson, readJsonFile, useContent } from './hooks/useContent';
+import { useAuth } from './hooks/useAuth';
+import { isCloud, saveDataset, seedCloud, type DatasetId } from './data';
 import { computeCrossRefs } from './utils/crossref';
 import Background from './components/Background';
 import EventsPage from './components/EventsPage';
@@ -46,10 +48,23 @@ function hashToTab(kind: string): Tab {
 
 export default function App() {
   const c = useContent();
+  const auth = useAuth();
   const [page, setPage] = useState<Tab>(() => hashToTab(parseHash().kind));
   const [pendingRegion, setPendingRegion] = useState<string | undefined>(undefined);
   const isData = page === 'events' || page === 'characters' || page === 'zones';
   const [editMode, setEditMode] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authMsg, setAuthMsg] = useState('');
+
+  // запись датасета в облако (только для вошедших редакторов)
+  const pushCloud = (id: DatasetId, data: unknown[]) => {
+    if (!isCloud) return;
+    if (!auth.email) {
+      alert('Войдите как редактор, чтобы сохранить правки в облако.');
+      return;
+    }
+    saveDataset(id, data).catch((e) => alert('Не удалось сохранить в облако: ' + e.message));
+  };
 
   // просмотр
   const [activeEvent, setActiveEvent] = useState<TimelineEvent | null>(null);
@@ -73,19 +88,48 @@ export default function App() {
 
   const saveEntity = (item: Entity) => {
     if (page === 'events') {
-      const e = item as TimelineEvent;
-      c.setEvents((prev) => upsert(prev, e).sort((a, b) => a.sortYear - b.sortYear));
+      const next = upsert(c.events, item as TimelineEvent).sort((a, b) => a.sortYear - b.sortYear);
+      c.setEvents(next);
+      pushCloud('events', next);
     } else if (page === 'characters') {
-      c.setCharacters((prev) => upsert(prev, item as Character));
+      const next = upsert(c.characters, item as Character);
+      c.setCharacters(next);
+      pushCloud('characters', next);
     } else {
-      c.setZones((prev) => upsert(prev, item as Zone));
+      const next = upsert(c.zones, item as Zone);
+      c.setZones(next);
+      pushCloud('zones', next);
     }
   };
 
   const deleteEntity = (id: string) => {
-    if (page === 'events') c.setEvents((p) => p.filter((x) => x.id !== id));
-    else if (page === 'characters') c.setCharacters((p) => p.filter((x) => x.id !== id));
-    else c.setZones((p) => p.filter((x) => x.id !== id));
+    if (page === 'events') {
+      const next = c.events.filter((x) => x.id !== id);
+      c.setEvents(next);
+      pushCloud('events', next);
+    } else if (page === 'characters') {
+      const next = c.characters.filter((x) => x.id !== id);
+      c.setCharacters(next);
+      pushCloud('characters', next);
+    } else {
+      const next = c.zones.filter((x) => x.id !== id);
+      c.setZones(next);
+      pushCloud('zones', next);
+    }
+  };
+
+  const handleSeedCloud = async () => {
+    try {
+      await seedCloud({ events: c.events, characters: c.characters, zones: c.zones });
+      setAuthMsg('Текущие данные залиты в облако ✓');
+    } catch (e) {
+      setAuthMsg('Ошибка заливки: ' + (e as Error).message);
+    }
+  };
+
+  const handleSignIn = async () => {
+    const r = await auth.signIn(authEmail);
+    setAuthMsg(r.message);
   };
 
   const exportCurrent = () => {
@@ -255,28 +299,74 @@ export default function App() {
         {editMode && isData && (
           <div className="edit-banner">
             <span>Режим редактирования.</span>
-            <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
-              Клик по карточке — правка. Изменения хранятся локально; для публикации жми «Экспорт» и
-              положи <code>{dataFile}</code> в <code>public/data/</code>.
-            </span>
-            <button className="icon-btn" onClick={exportCurrent}>
-              ⬇ Экспорт {dataFile}
-            </button>
-            <button className="icon-btn" onClick={() => fileRef.current?.click()}>
-              ⬆ Импорт
-            </button>
-            {c.hasDraft && (
-              <button className="icon-btn" onClick={c.resetToRepo}>
-                ↺ Сбросить черновик
-              </button>
+
+            {isCloud ? (
+              auth.email ? (
+                <>
+                  <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
+                    Правки сохраняются в <b>общее облако</b> — друзья увидят их при перезагрузке.
+                    Вошли: <b>{auth.email}</b>
+                  </span>
+                  <button className="icon-btn" onClick={handleSeedCloud}>
+                    ⬆ Залить всё в облако
+                  </button>
+                  <button className="icon-btn" onClick={exportCurrent}>
+                    ⬇ Бэкап {dataFile}
+                  </button>
+                  <button className="icon-btn" onClick={() => void auth.signOut()}>
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
+                    Чтобы сохранять правки в общее облако, войди по e-mail (ссылка придёт на почту):
+                  </span>
+                  <input
+                    className="search-input"
+                    style={{ minWidth: 220 }}
+                    type="email"
+                    placeholder="you@example.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                  />
+                  <button className="icon-btn active" onClick={handleSignIn}>
+                    Войти
+                  </button>
+                </>
+              )
+            ) : (
+              <>
+                <span style={{ color: 'var(--parchment)', fontFamily: 'var(--font-body)' }}>
+                  Клик по карточке — правка. Изменения хранятся локально; для публикации жми
+                  «Экспорт» и положи <code>{dataFile}</code> в <code>public/data/</code>.
+                </span>
+                <button className="icon-btn" onClick={exportCurrent}>
+                  ⬇ Экспорт {dataFile}
+                </button>
+                <button className="icon-btn" onClick={() => fileRef.current?.click()}>
+                  ⬆ Импорт
+                </button>
+                {c.hasDraft && (
+                  <button className="icon-btn" onClick={c.resetToRepo}>
+                    ↺ Сбросить черновик
+                  </button>
+                )}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/json"
+                  style={{ display: 'none' }}
+                  onChange={(e) => e.target.files?.[0] && importCurrent(e.target.files[0])}
+                />
+              </>
             )}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json"
-              style={{ display: 'none' }}
-              onChange={(e) => e.target.files?.[0] && importCurrent(e.target.files[0])}
-            />
+
+            {authMsg && (
+              <span style={{ color: 'var(--titan-gold)', fontFamily: 'var(--font-body)' }}>
+                {authMsg}
+              </span>
+            )}
           </div>
         )}
 

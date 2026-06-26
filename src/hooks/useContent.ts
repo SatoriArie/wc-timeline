@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Character, TimelineEvent, Zone } from '../data/types';
-import { fetchContent, type Content } from '../data';
+import { fetchContent, isCloud, type Content } from '../data';
 
 const LS_KEY = 'wc-timeline-draft-v2';
 
@@ -42,7 +42,8 @@ export function useContent() {
       .then((content) => {
         if (!alive) return;
         repo.current = content;
-        const draft = loadDraft();
+        // в облачном режиме общая БД — источник правды; локальный черновик не накладываем
+        const draft = isCloud ? {} : loadDraft();
         setEventsRaw(draft.events ?? content.events);
         setCharactersRaw(draft.characters ?? content.characters);
         setZonesRaw(draft.zones ?? content.zones);
@@ -59,9 +60,9 @@ export function useContent() {
     };
   }, []);
 
-  // сохраняем черновик только после правок пользователя
+  // сохраняем черновик только после правок пользователя (в статическом режиме)
   useEffect(() => {
-    if (!loaded.current || !dirty.current) return;
+    if (isCloud || !loaded.current || !dirty.current) return;
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones }));
     } catch {
@@ -97,6 +98,7 @@ export function useContent() {
   }, []);
 
   const hasDraft = (() => {
+    if (isCloud) return false;
     try {
       return !!localStorage.getItem(LS_KEY);
     } catch {
