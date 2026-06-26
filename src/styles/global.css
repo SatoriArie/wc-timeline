@@ -1361,3 +1361,25 @@ a {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .add-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 34px rgba(255, 207, 87, 0.6); }
+
+/* тост realtime-обновления */
+.sync-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 300;
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  color: var(--gold-bright);
+  background: linear-gradient(160deg, rgba(34, 48, 74, 0.97), rgba(16, 24, 42, 0.97));
+  border: 1px solid var(--titan-gold);
+  border-radius: 24px;
+  padding: 11px 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 207, 87, 0.25);
+  animation: syncToastIn 0.3s ease-out;
+}
+@keyframes syncToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

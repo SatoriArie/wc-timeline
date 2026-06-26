@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Character, TimelineEvent, Zone } from '../data/types';
-import { fetchContent, isCloud, type Content } from '../data';
+import { fetchContent, isCloud, supabase, type Content } from '../data';
 
 const LS_KEY = 'wc-timeline-draft-v2';
 
@@ -35,6 +35,7 @@ export function useContent() {
   const repo = useRef<Content | null>(null);
   const loaded = useRef(false);
   const dirty = useRef(false);
+  const [syncCount, setSyncCount] = useState(0); // растёт при realtime-обновлении от других
 
   useEffect(() => {
     let alive = true;
@@ -57,6 +58,29 @@ export function useContent() {
       });
     return () => {
       alive = false;
+    };
+  }, []);
+
+  // realtime: подхватываем правки других редакторов без перезагрузки
+  useEffect(() => {
+    if (!isCloud || !supabase) return;
+    const client = supabase;
+    const channel = client
+      .channel('content-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content' }, () => {
+        fetchContent()
+          .then((content) => {
+            repo.current = content;
+            setEventsRaw(content.events);
+            setCharactersRaw(content.characters);
+            setZonesRaw(content.zones);
+            setSyncCount((n) => n + 1);
+          })
+          .catch(() => {});
+      })
+      .subscribe();
+    return () => {
+      client.removeChannel(channel);
     };
   }, []);
 
@@ -117,6 +141,7 @@ export function useContent() {
     setZones,
     resetToRepo,
     hasDraft,
+    syncCount,
   };
 }
 

@@ -56,6 +56,15 @@ export default function App() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authMsg, setAuthMsg] = useState('');
+  const [syncToast, setSyncToast] = useState(false);
+
+  // тост при realtime-обновлении от других редакторов
+  useEffect(() => {
+    if (c.syncCount === 0) return;
+    setSyncToast(true);
+    const t = setTimeout(() => setSyncToast(false), 2600);
+    return () => clearTimeout(t);
+  }, [c.syncCount]);
 
   // запись датасета в облако (только для вошедших редакторов)
   const pushCloud = (id: DatasetId, data: unknown[]) => {
@@ -470,6 +479,10 @@ export default function App() {
         onSave={saveEntity}
         onDelete={deleteEntity}
       />
+
+      {syncToast && (
+        <div className="sync-toast">✦ Хроники обновлены</div>
+      )}
     </>
   );
 }
