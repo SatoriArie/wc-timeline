@@ -177,7 +177,6 @@ export default function EditModal({
             <Field label="Класс" value={form.class} onChange={(v) => set('class', v)} />
             <Field label="Статус (Жив / Погиб / Нежить…)" value={form.status} onChange={(v) => set('status', v)} />
             <Field label="Портрет (URL)" value={form.portrait} onChange={(v) => set('portrait', v)} />
-            <Area label="Принадлежность (по строке)" value={form.affiliations} onChange={(v) => set('affiliations', v)} />
             <Area label="Биография" value={form.biography} onChange={(v) => set('biography', v)} rows={6} />
             <Field label="Роль" value={form.role} onChange={(v) => set('role', v)} />
             <RelationsEditor
@@ -186,6 +185,7 @@ export default function EditModal({
               characters={allCharacters}
               selfId={(item as Character | null)?.id}
             />
+            <Area label="Принадлежность (по строке)" value={form.affiliations} onChange={(v) => set('affiliations', v)} />
             <Area label="Игры (по строке)" value={form.games} onChange={(v) => set('games', v)} />
             <Area label="Книги (по строке)" value={form.books} onChange={(v) => set('books', v)} />
           </>
