@@ -15,6 +15,7 @@ interface Props {
   onClose: () => void;
   onEvent: (e: TimelineEvent) => void;
   onCharacter: (id: string) => void;
+  onFaction: (name: string) => void;
 }
 
 const KIND_LABEL: Record<RelationKind, string> = {
@@ -30,6 +31,7 @@ export default function CharacterModal({
   onClose,
   onEvent,
   onCharacter,
+  onFaction,
 }: Props) {
   return (
     <Modal open={!!character} onClose={onClose}>
@@ -111,9 +113,9 @@ export default function CharacterModal({
               <h3>Принадлежность</h3>
               <div className="tag-row">
                 {character.affiliations.map((a, i) => (
-                  <span key={i} className="affil-tag">
+                  <button key={i} className="affil-tag affil-clickable" onClick={() => onFaction(a)}>
                     {a}
-                  </span>
+                  </button>
                 ))}
               </div>
             </section>

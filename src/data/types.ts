@@ -88,4 +88,18 @@ export interface Zone {
   images: string[];
 }
 
-export type PageId = 'events' | 'characters' | 'zones';
+/** Фракция / орден / организация (редактируемая сущность). */
+export interface Organization {
+  id: string;
+  name: string;
+  /** Категория для группировки (напр. «Силы Альянса») */
+  category: string;
+  /** Краткий эпитет/тип */
+  domain: string;
+  /** Описание */
+  note: string;
+  /** Цветовой акцент */
+  color: string;
+}
+
+export type PageId = 'events' | 'characters' | 'zones' | 'organizations';

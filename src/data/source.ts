@@ -1,4 +1,4 @@
-import type { Character, TimelineEvent, Zone } from './types';
+import type { Character, Organization, TimelineEvent, Zone } from './types';
 import { supabase, isCloud } from './supabase';
 
 // Источник данных. Читает из Supabase (если настроен), иначе — статические JSON
@@ -8,9 +8,10 @@ export interface Content {
   events: TimelineEvent[];
   characters: Character[];
   zones: Zone[];
+  organizations: Organization[];
 }
 
-export type DatasetId = 'events' | 'characters' | 'zones';
+export type DatasetId = 'events' | 'characters' | 'zones' | 'organizations';
 
 const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
@@ -85,15 +86,31 @@ function normZone(z: LegacyZone): Zone {
     images: arr(z.images),
   };
 }
+function normOrg(o: Partial<Organization>): Organization {
+  return {
+    id: String(o.id ?? cryptoId()),
+    name: o.name ?? 'Без названия',
+    category: o.category ?? 'Прочее',
+    domain: o.domain ?? '',
+    note: o.note ?? '',
+    color: o.color ?? '#b58b4a',
+  };
+}
 function cryptoId(): string {
   return 'item-' + Math.random().toString(36).slice(2, 9);
 }
 
-function normalizeAll(events: unknown, characters: unknown, zones: unknown): Content {
+function normalizeAll(
+  events: unknown,
+  characters: unknown,
+  zones: unknown,
+  organizations: unknown,
+): Content {
   return {
     events: arr<Partial<TimelineEvent>>(events).map(normEvent).sort((a, b) => a.sortYear - b.sortYear),
     characters: arr<Partial<Character>>(characters).map(normCharacter),
     zones: arr<Partial<Zone>>(zones).map(normZone),
+    organizations: arr<Partial<Organization>>(organizations).map(normOrg),
   };
 }
 
@@ -105,12 +122,13 @@ async function fetchJson(file: string): Promise<unknown> {
   return res.json();
 }
 async function fetchStatic(): Promise<Content> {
-  const [events, characters, zones] = await Promise.all([
+  const [events, characters, zones, organizations] = await Promise.all([
     fetchJson('events.json'),
     fetchJson('characters.json'),
     fetchJson('zones.json'),
+    fetchJson('organizations.json').catch(() => []),
   ]);
-  return normalizeAll(events, characters, zones);
+  return normalizeAll(events, characters, zones, organizations);
 }
 
 // --- облачный источник (Supabase) ---
@@ -124,7 +142,12 @@ async function fetchCloud(): Promise<Content | null> {
   if (!data || data.length === 0) return null; // облако ещё пустое
   const by: Record<string, unknown> = {};
   for (const row of data) by[(row as { id: string }).id] = (row as { data: unknown }).data;
-  return normalizeAll(by.events, by.characters, by.zones);
+  // если в облаке ещё нет какого-то датасета (напр. organizations) — берём его из репозитория
+  let organizations = by.organizations;
+  if (!Array.isArray(organizations) || organizations.length === 0) {
+    organizations = await fetchJson('organizations.json').catch(() => []);
+  }
+  return normalizeAll(by.events, by.characters, by.zones, organizations);
 }
 
 /** Принудительно загрузить базовые данные из репозитория (public/data), минуя облако. */
@@ -155,4 +178,5 @@ export async function seedCloud(content: Content): Promise<void> {
   await saveDataset('events', content.events);
   await saveDataset('characters', content.characters);
   await saveDataset('zones', content.zones);
+  await saveDataset('organizations', content.organizations);
 }

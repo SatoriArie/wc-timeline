@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Character, TimelineEvent, Zone } from '../data/types';
+import type { Character, Organization, TimelineEvent, Zone } from '../data/types';
 import { fetchContent, isCloud, supabase, type Content } from '../data';
 
 const LS_KEY = 'wc-timeline-draft-v2';
@@ -8,6 +8,7 @@ interface Draft {
   events?: TimelineEvent[];
   characters?: Character[];
   zones?: Zone[];
+  organizations?: Organization[];
 }
 
 function loadDraft(): Draft {
@@ -31,6 +32,7 @@ export function useContent() {
   const [events, setEventsRaw] = useState<TimelineEvent[]>([]);
   const [characters, setCharactersRaw] = useState<Character[]>([]);
   const [zones, setZonesRaw] = useState<Zone[]>([]);
+  const [organizations, setOrganizationsRaw] = useState<Organization[]>([]);
 
   const repo = useRef<Content | null>(null);
   const loaded = useRef(false);
@@ -48,6 +50,7 @@ export function useContent() {
         setEventsRaw(draft.events ?? content.events);
         setCharactersRaw(draft.characters ?? content.characters);
         setZonesRaw(draft.zones ?? content.zones);
+        setOrganizationsRaw(draft.organizations ?? content.organizations);
         loaded.current = true;
         setStatus('ready');
       })
@@ -74,6 +77,7 @@ export function useContent() {
             setEventsRaw(content.events);
             setCharactersRaw(content.characters);
             setZonesRaw(content.zones);
+            setOrganizationsRaw(content.organizations);
             setSyncCount((n) => n + 1);
           })
           .catch(() => {});
@@ -88,11 +92,11 @@ export function useContent() {
   useEffect(() => {
     if (isCloud || !loaded.current || !dirty.current) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones, organizations }));
     } catch {
       /* квота/приватный режим — игнорируем */
     }
-  }, [events, characters, zones]);
+  }, [events, characters, zones, organizations]);
 
   const setEvents = useCallback((u: React.SetStateAction<TimelineEvent[]>) => {
     dirty.current = true;
@@ -106,6 +110,10 @@ export function useContent() {
     dirty.current = true;
     setZonesRaw(u);
   }, []);
+  const setOrganizations = useCallback((u: React.SetStateAction<Organization[]>) => {
+    dirty.current = true;
+    setOrganizationsRaw(u);
+  }, []);
 
   const resetToRepo = useCallback(() => {
     try {
@@ -118,6 +126,7 @@ export function useContent() {
       setEventsRaw(repo.current.events);
       setCharactersRaw(repo.current.characters);
       setZonesRaw(repo.current.zones);
+      setOrganizationsRaw(repo.current.organizations);
     }
   }, []);
 
@@ -136,9 +145,11 @@ export function useContent() {
     events,
     characters,
     zones,
+    organizations,
     setEvents,
     setCharacters,
     setZones,
+    setOrganizations,
     resetToRepo,
     hasDraft,
     syncCount,

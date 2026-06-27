@@ -6,6 +6,7 @@ import { AllianceCrest, EraSigil, HordeCrest } from './icons';
 interface Props {
   zone: Zone | null;
   onClose: () => void;
+  onFaction: (name: string) => void;
 }
 
 const paras = (text: string) =>
@@ -21,25 +22,39 @@ function eraRank(era: string): number {
   return i === -1 ? 9999 : i;
 }
 
-function InfoRow({ label, items }: { label: string; items: string[] }) {
+function InfoRow({
+  label,
+  items,
+  onItem,
+}: {
+  label: string;
+  items: string[];
+  onItem?: (v: string) => void;
+}) {
   if (!items.length) return null;
   return (
     <div className="info-row">
       <span className="info-label">{label}</span>
       <div className="info-vals">
-        {items.map((v) => (
-          <span key={v} className="info-chip">
-            {v === 'Альянс' && <AllianceCrest size={13} />}
-            {v === 'Орда' && <HordeCrest size={13} />}
-            {v}
-          </span>
-        ))}
+        {items.map((v) =>
+          onItem ? (
+            <button key={v} className="info-chip info-chip-btn" onClick={() => onItem(v)}>
+              {v === 'Альянс' && <AllianceCrest size={13} />}
+              {v === 'Орда' && <HordeCrest size={13} />}
+              {v}
+            </button>
+          ) : (
+            <span key={v} className="info-chip">
+              {v}
+            </span>
+          ),
+        )}
       </div>
     </div>
   );
 }
 
-export default function ZoneModal({ zone, onClose }: Props) {
+export default function ZoneModal({ zone, onClose, onFaction }: Props) {
   // группировка летописи по эпохам
   const groups: { era: string; entries: ZoneChronicle[] }[] = [];
   if (zone) {
@@ -81,7 +96,7 @@ export default function ZoneModal({ zone, onClose }: Props) {
                 <InfoRow label="Правители" items={zone.rulers} />
                 <InfoRow label="Крупные поселения" items={zone.settlementsMajor} />
                 <InfoRow label="Малые поселения" items={zone.settlementsMinor} />
-                <InfoRow label="Принадлежность" items={zone.factions} />
+                <InfoRow label="Принадлежность" items={zone.factions} onItem={onFaction} />
                 {zone.region && <InfoRow label="Регион" items={[zone.region]} />}
               </div>
             </section>
@@ -104,13 +119,14 @@ export default function ZoneModal({ zone, onClose }: Props) {
                     {entries.map((c, i) => (
                       <div className="chron-entry" key={i}>
                         {c.faction && (
-                          <span
-                            className={`faction-tag ${c.faction === 'Альянс' ? 'alliance' : c.faction === 'Орда' ? 'horde' : 'neutral'} chron-faction`}
+                          <button
+                            className={`faction-tag ${c.faction === 'Альянс' ? 'alliance' : c.faction === 'Орда' ? 'horde' : 'neutral'} chron-faction faction-tag-btn`}
+                            onClick={() => onFaction(c.faction)}
                           >
                             {c.faction === 'Альянс' && <AllianceCrest size={13} />}
                             {c.faction === 'Орда' && <HordeCrest size={13} />}
                             {c.faction}
-                          </span>
+                          </button>
                         )}
                         <div className="chron-text">{paras(c.text)}</div>
                       </div>

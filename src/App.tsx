@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Character, PageId, TimelineEvent, Zone } from './data/types';
+import type { Character, Organization, PageId, TimelineEvent, Zone } from './data/types';
 import { downloadJson, readJsonFile, useContent } from './hooks/useContent';
 import { useAuth } from './hooks/useAuth';
 import { isCloud, fetchRepo, saveDataset, seedCloud, type DatasetId } from './data';
@@ -18,8 +18,8 @@ import OrganizationsPage from './components/OrganizationsPage';
 import HomePage from './components/HomePage';
 import MapPage from './components/MapPage';
 
-type Entity = TimelineEvent | Character | Zone;
-type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'organizations' | 'map';
+type Entity = TimelineEvent | Character | Zone | Organization;
+type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'map';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Главная' },
@@ -62,7 +62,9 @@ export default function App() {
   const auth = useAuth();
   const [page, setPage] = useState<Tab>(() => hashToTab(parseHash().kind));
   const [pendingRegion, setPendingRegion] = useState<string | undefined>(undefined);
-  const isData = page === 'events' || page === 'characters' || page === 'zones';
+  const [factionTarget, setFactionTarget] = useState<string | undefined>(undefined);
+  const isData =
+    page === 'events' || page === 'characters' || page === 'zones' || page === 'organizations';
   const [editMode, setEditMode] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -107,6 +109,9 @@ export default function App() {
     characters: (ch: Character) =>
       editMode ? setEditing({ open: true, item: ch }) : setActiveCharacter(ch),
     zones: (z: Zone) => (editMode ? setEditing({ open: true, item: z }) : setActiveZone(z)),
+    organizations: (o: Organization) => {
+      if (editMode) setEditing({ open: true, item: o });
+    },
   };
 
   const saveEntity = (item: Entity) => {
@@ -118,10 +123,14 @@ export default function App() {
       const next = upsert(c.characters, item as Character);
       c.setCharacters(next);
       pushCloud('characters', next);
-    } else {
+    } else if (page === 'zones') {
       const next = upsert(c.zones, item as Zone);
       c.setZones(next);
       pushCloud('zones', next);
+    } else {
+      const next = upsert(c.organizations, item as Organization);
+      c.setOrganizations(next);
+      pushCloud('organizations', next);
     }
   };
 
@@ -134,16 +143,25 @@ export default function App() {
       const next = c.characters.filter((x) => x.id !== id);
       c.setCharacters(next);
       pushCloud('characters', next);
-    } else {
+    } else if (page === 'zones') {
       const next = c.zones.filter((x) => x.id !== id);
       c.setZones(next);
       pushCloud('zones', next);
+    } else {
+      const next = c.organizations.filter((x) => x.id !== id);
+      c.setOrganizations(next);
+      pushCloud('organizations', next);
     }
   };
 
   const handleSeedCloud = async () => {
     try {
-      await seedCloud({ events: c.events, characters: c.characters, zones: c.zones });
+      await seedCloud({
+        events: c.events,
+        characters: c.characters,
+        zones: c.zones,
+        organizations: c.organizations,
+      });
       setAuthMsg('Текущие данные залиты в облако ✓');
     } catch (e) {
       setAuthMsg('Ошибка заливки: ' + (e as Error).message);
@@ -158,6 +176,7 @@ export default function App() {
       c.setEvents(fresh.events);
       c.setCharacters(fresh.characters);
       c.setZones(fresh.zones);
+      c.setOrganizations(fresh.organizations);
       setAuthMsg('Облако обновлено из репозитория ✓');
     } catch (e) {
       setAuthMsg('Ошибка синхронизации: ' + (e as Error).message);
@@ -173,7 +192,8 @@ export default function App() {
   const exportCurrent = () => {
     if (page === 'events') downloadJson('events.json', c.events);
     else if (page === 'characters') downloadJson('characters.json', c.characters);
-    else downloadJson('zones.json', c.zones);
+    else if (page === 'zones') downloadJson('zones.json', c.zones);
+    else downloadJson('organizations.json', c.organizations);
   };
 
   const importCurrent = async (file: File) => {
@@ -181,14 +201,21 @@ export default function App() {
       const data = await readJsonFile<Entity[]>(file);
       if (page === 'events') c.setEvents(data as TimelineEvent[]);
       else if (page === 'characters') c.setCharacters(data as Character[]);
-      else c.setZones(data as Zone[]);
+      else if (page === 'zones') c.setZones(data as Zone[]);
+      else c.setOrganizations(data as Organization[]);
     } catch {
       alert('Не удалось прочитать JSON-файл.');
     }
   };
 
   const dataFile =
-    page === 'events' ? 'events.json' : page === 'characters' ? 'characters.json' : 'zones.json';
+    page === 'events'
+      ? 'events.json'
+      : page === 'characters'
+        ? 'characters.json'
+        : page === 'zones'
+          ? 'zones.json'
+          : 'organizations.json';
 
   // переплетение лора: персонаж ↔ событие
   const crossRefs = useMemo(() => computeCrossRefs(c.events, c.characters), [c.events, c.characters]);
@@ -219,6 +246,13 @@ export default function App() {
     if (!ch) return;
     setActiveCharacter(null);
     setTimeout(() => setActiveCharacter(ch), 250);
+  };
+  const openFaction = (name: string) => {
+    setActiveCharacter(null);
+    setActiveZone(null);
+    setActiveEvent(null);
+    setFactionTarget(name);
+    setPage('organizations');
   };
 
   // ===== Дип-линки: синхронизация URL-хэша с открытым контентом =====
@@ -469,7 +503,14 @@ export default function App() {
         )}
         {page === 'cosmology' && <CosmologyPage />}
         {page === 'pantheons' && <PantheonsPage />}
-        {page === 'organizations' && <OrganizationsPage />}
+        {c.status === 'ready' && page === 'organizations' && (
+          <OrganizationsPage
+            organizations={c.organizations}
+            onSelect={openForView.organizations}
+            highlight={factionTarget}
+            onHighlightDone={() => setFactionTarget(undefined)}
+          />
+        )}
       </div>
 
       {editMode && isData && (
@@ -497,8 +538,9 @@ export default function App() {
         onClose={() => setActiveCharacter(null)}
         onEvent={openEventFromRef}
         onCharacter={openCharacterById}
+        onFaction={openFaction}
       />
-      <ZoneModal zone={activeZone} onClose={() => setActiveZone(null)} />
+      <ZoneModal zone={activeZone} onClose={() => setActiveZone(null)} onFaction={openFaction} />
 
       {/* Редактирование */}
       <EditModal
@@ -506,6 +548,7 @@ export default function App() {
         item={editing.item}
         open={editing.open}
         allCharacters={c.characters}
+        allFactions={c.organizations.map((o) => o.name)}
         onClose={() => setEditing({ open: false, item: null })}
         onSave={saveEntity}
         onDelete={deleteEntity}

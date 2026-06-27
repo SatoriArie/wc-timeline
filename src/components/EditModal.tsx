@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type {
   Character,
+  Organization,
   PageId,
   Relation,
   RelationKind,
@@ -10,7 +11,7 @@ import type {
   Zone,
   ZoneChronicle,
 } from '../data/types';
-import { eraOrder, regionOrder, allFactionNames } from '../data';
+import { eraOrder, regionOrder, orgCategoryOrder } from '../data';
 import Modal from './Modal';
 import { SOURCE_LABEL, SourceIcon } from './icons';
 
@@ -21,13 +22,14 @@ const RELATION_KINDS: { id: RelationKind; label: string }[] = [
   { id: 'kin', label: 'Родство' },
 ];
 
-type Entity = TimelineEvent | Character | Zone;
+type Entity = TimelineEvent | Character | Zone | Organization;
 
 interface Props {
   type: PageId;
   item: Entity | null; // null => создание
   open: boolean;
   allCharacters: Character[];
+  allFactions: string[];
   onClose: () => void;
   onSave: (item: Entity) => void;
   onDelete?: (id: string) => void;
@@ -44,6 +46,7 @@ export default function EditModal({
   item,
   open,
   allCharacters,
+  allFactions,
   onClose,
   onSave,
   onDelete,
@@ -83,7 +86,7 @@ export default function EditModal({
         books: lines(c?.books),
       });
       setRelations(c?.relations?.length ? c.relations.map((r) => ({ ...r })) : []);
-    } else {
+    } else if (type === 'zones') {
       const z = item as Zone | null;
       setForm({
         name: z?.name ?? '',
@@ -96,6 +99,15 @@ export default function EditModal({
         images: lines(z?.images),
       });
       setZoneChronicle(z?.chronicle?.length ? z.chronicle.map((c) => ({ ...c })) : []);
+    } else {
+      const o = item as Organization | null;
+      setForm({
+        name: o?.name ?? '',
+        category: o?.category ?? '',
+        domain: o?.domain ?? '',
+        note: o?.note ?? '',
+        color: o?.color ?? '#b58b4a',
+      });
     }
   }, [open, item, type]);
 
@@ -137,7 +149,7 @@ export default function EditModal({
           .filter((r) => r.id)
           .map((r) => ({ id: r.id, kind: r.kind, ...(r.note ? { note: r.note } : {}) })),
       } satisfies Character;
-    } else {
+    } else if (type === 'zones') {
       result = {
         id: (item as Zone)?.id ?? slug(form.name),
         name: form.name,
@@ -152,12 +164,28 @@ export default function EditModal({
           .map((c) => ({ faction: c.faction.trim(), era: c.era.trim(), text: c.text })),
         images: toLines(form.images),
       } satisfies Zone;
+    } else {
+      result = {
+        id: (item as Organization)?.id ?? slug(form.name),
+        name: form.name,
+        category: form.category,
+        domain: form.domain,
+        note: form.note,
+        color: form.color || '#b58b4a',
+      } satisfies Organization;
     }
     onSave(result);
     onClose();
   };
 
-  const label = type === 'events' ? 'событие' : type === 'characters' ? 'персонажа' : 'зону';
+  const label =
+    type === 'events'
+      ? 'событие'
+      : type === 'characters'
+        ? 'персонажа'
+        : type === 'zones'
+          ? 'зону'
+          : 'фракцию';
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -208,6 +236,23 @@ export default function EditModal({
             <ZoneChronicleEditor chronicle={zoneChronicle} onChange={setZoneChronicle} />
           </>
         )}
+        {type === 'organizations' && (
+          <>
+            <Field label="Название" value={form.name} onChange={(v) => set('name', v)} />
+            <Field label="Категория" value={form.category} onChange={(v) => set('category', v)} list="orgcats" />
+            <Field label="Тип / эпитет" value={form.domain} onChange={(v) => set('domain', v)} />
+            <Area label="Описание" value={form.note} onChange={(v) => set('note', v)} rows={4} />
+            <label className="form-row">
+              <span>Цвет акцента</span>
+              <input
+                type="color"
+                className="color-input"
+                value={form.color || '#b58b4a'}
+                onChange={(e) => set('color', e.target.value)}
+              />
+            </label>
+          </>
+        )}
 
         <datalist id="eras">
           {eraOrder.map((e) => (
@@ -220,8 +265,13 @@ export default function EditModal({
           ))}
         </datalist>
         <datalist id="factions">
-          {allFactionNames.map((f) => (
+          {allFactions.map((f) => (
             <option key={f} value={f} />
+          ))}
+        </datalist>
+        <datalist id="orgcats">
+          {orgCategoryOrder.map((cat) => (
+            <option key={cat} value={cat} />
           ))}
         </datalist>
 

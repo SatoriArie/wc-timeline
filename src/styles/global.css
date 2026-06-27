@@ -915,6 +915,24 @@ a {
   background: radial-gradient(circle at 35% 30%, #fff, var(--mc) 70%);
   box-shadow: 0 0 16px color-mix(in srgb, var(--mc) 60%, transparent);
 }
+.member-clickable { cursor: pointer; }
+.org-highlight {
+  animation: orgPulse 2.2s ease-out;
+  border-color: var(--mc) !important;
+}
+@keyframes orgPulse {
+  0%, 100% { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); }
+  20%, 60% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 70%, transparent), 0 0 30px color-mix(in srgb, var(--mc) 50%, transparent); }
+}
+.color-input {
+  width: 64px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid #c0a06a;
+  border-radius: 8px;
+  background: #fffdf6;
+  cursor: pointer;
+}
 .member-name { font-family: var(--font-head); font-size: 1.12rem; color: var(--mc); }
 .member-domain { display: block; font-style: italic; color: var(--titan-gold); font-size: 0.85rem; margin: 2px 0 7px; }
 .member-note { font-size: 0.93rem; line-height: 1.55; color: rgba(225, 230, 240, 0.82); }
@@ -1190,6 +1208,36 @@ a {
   border-radius: 20px;
   font-size: 0.9rem;
   font-family: var(--font-head);
+}
+.affil-clickable { cursor: pointer; transition: all 0.18s ease; }
+.affil-clickable:hover { background: rgba(139, 90, 38, 0.28); border-color: #8b5a26; }
+.info-chip-btn { cursor: pointer; font: inherit; transition: all 0.18s ease; }
+.info-chip-btn:hover { background: rgba(139, 90, 38, 0.22); border-color: #8b5a26; }
+.faction-tag-btn { cursor: pointer; font: inherit; transition: all 0.18s ease; }
+.faction-tag-btn:hover { filter: brightness(1.12); }
+/* кликабельные чипы принадлежности/фракций */
+.affil-clickable,
+.info-chip-btn,
+.faction-tag-btn {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.affil-clickable:hover,
+.info-chip-btn:hover,
+.faction-tag-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(139, 90, 38, 0.22);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+/* подсветка плитки организации при переходе */
+.member-card.org-highlight {
+  animation: orgHighlight 2.4s ease-out;
+}
+@keyframes orgHighlight {
+  0%, 100% { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); }
+  15%, 45% {
+    box-shadow: 0 0 0 2px var(--mc), 0 0 26px color-mix(in srgb, var(--mc) 60%, transparent);
+  }
 }
 
 .modal-portrait {
