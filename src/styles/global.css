@@ -1121,8 +1121,16 @@ a {
 .rel-kin { border-left-color: #4a9e5c; }
 .rel-kin .ref-chip-avatar { background: linear-gradient(160deg, #2f6b40, #16301f); }
 
-/* инфобокс зоны */
-.zone-info { display: flex; flex-direction: column; gap: 10px; }
+/* инфобокс зоны — панель-«досье» */
+.zone-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(139, 90, 38, 0.06);
+  border: 1px solid #c9ad7d;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
 .info-row { display: flex; gap: 12px; align-items: baseline; }
 .info-label {
   flex-shrink: 0;
@@ -1167,10 +1175,21 @@ a {
   color: color-mix(in srgb, var(--ec) 55%, #3a2412);
   margin-bottom: 10px;
 }
-.chron-entry { margin-bottom: 10px; }
-.chron-entry:last-child { margin-bottom: 0; }
-.chron-faction { margin-bottom: 6px; }
+.chron-overview p { margin-bottom: 8px; line-height: 1.65; }
+.chron-overview:not(:last-child) { margin-bottom: 12px; }
+.chron-faction-block {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 0 10px 10px 0;
+  border-left: 3px solid #b58b4a;
+  background: rgba(0, 0, 0, 0.03);
+}
+.chron-faction-block.alliance { border-left-color: var(--alliance); background: rgba(91, 141, 239, 0.08); }
+.chron-faction-block.horde { border-left-color: var(--horde); background: rgba(214, 72, 59, 0.08); }
+.chron-faction-block.neutral { border-left-color: #c08a16; background: rgba(255, 207, 87, 0.08); }
+.chron-faction-block .faction-tag { margin-bottom: 8px; }
 .chron-text p { margin-bottom: 6px; line-height: 1.6; }
+.chron-text p:last-child { margin-bottom: 0; }
 
 .faction-block { padding: 16px 18px; border-radius: 12px; margin-bottom: 14px; }
 .faction-block.alliance { background: rgba(91, 141, 239, 0.14); border-left: 4px solid var(--alliance); }

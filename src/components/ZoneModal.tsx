@@ -15,7 +15,11 @@ const paras = (text: string) =>
     .filter((p) => p.trim())
     .map((p, i) => <p key={i}>{p}</p>);
 
-/** Порядок эпох в летописи: «общее» (пусто) → канон-порядок → неизвестные. */
+const factionClass = (f: string) => (f === 'Альянс' ? 'alliance' : f === 'Орда' ? 'horde' : 'neutral');
+const factionCrest = (f: string) =>
+  f === 'Альянс' ? <AllianceCrest size={13} /> : f === 'Орда' ? <HordeCrest size={13} /> : null;
+
+/** Порядок эпох: «общее» (пусто) → канон-порядок → неизвестные. */
 function eraRank(era: string): number {
   if (!era) return -1;
   const i = eraOrder.indexOf(era);
@@ -39,8 +43,7 @@ function InfoRow({
         {items.map((v) =>
           onItem ? (
             <button key={v} className="info-chip info-chip-btn" onClick={() => onItem(v)}>
-              {v === 'Альянс' && <AllianceCrest size={13} />}
-              {v === 'Орда' && <HordeCrest size={13} />}
+              {factionCrest(v)}
               {v}
             </button>
           ) : (
@@ -55,20 +58,29 @@ function InfoRow({
 }
 
 export default function ZoneModal({ zone, onClose, onFaction }: Props) {
-  // группировка летописи по эпохам
-  const groups: { era: string; entries: ZoneChronicle[] }[] = [];
+  // летопись: эпоха → { общий обзор, блоки по фракциям }
+  const groups: {
+    era: string;
+    general: ZoneChronicle[];
+    factions: [string, ZoneChronicle[]][];
+  }[] = [];
   if (zone) {
-    const map = new Map<string, ZoneChronicle[]>();
+    const byEra = new Map<string, ZoneChronicle[]>();
     for (const c of zone.chronicle) {
       if (!c.text.trim()) continue;
-      if (!map.has(c.era)) map.set(c.era, []);
-      map.get(c.era)!.push(c);
+      if (!byEra.has(c.era)) byEra.set(c.era, []);
+      byEra.get(c.era)!.push(c);
     }
-    groups.push(
-      ...[...map.entries()]
-        .map(([era, entries]) => ({ era, entries }))
-        .sort((a, b) => eraRank(a.era) - eraRank(b.era)),
-    );
+    for (const [era, entries] of [...byEra.entries()].sort((a, b) => eraRank(a[0]) - eraRank(b[0]))) {
+      const general = entries.filter((e) => !e.faction.trim());
+      const facMap = new Map<string, ZoneChronicle[]>();
+      for (const e of entries) {
+        if (!e.faction.trim()) continue;
+        if (!facMap.has(e.faction)) facMap.set(e.faction, []);
+        facMap.get(e.faction)!.push(e);
+      }
+      groups.push({ era, general, factions: [...facMap.entries()] });
+    }
   }
 
   const hasInfo =
@@ -106,7 +118,7 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
             <section>
               <h3>Летопись зоны</h3>
               <div className="zone-chronicle">
-                {groups.map(({ era, entries }) => (
+                {groups.map(({ era, general, factions }) => (
                   <div
                     className="chron-era"
                     key={era || '__'}
@@ -116,19 +128,21 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
                       {era ? <EraSigil index={Math.max(0, eraOrder.indexOf(era))} size={16} /> : null}
                       <span>{era ? shortEra(era) : 'Общее положение'}</span>
                     </div>
-                    {entries.map((c, i) => (
-                      <div className="chron-entry" key={i}>
-                        {c.faction && (
-                          <button
-                            className={`faction-tag ${c.faction === 'Альянс' ? 'alliance' : c.faction === 'Орда' ? 'horde' : 'neutral'} chron-faction faction-tag-btn`}
-                            onClick={() => onFaction(c.faction)}
-                          >
-                            {c.faction === 'Альянс' && <AllianceCrest size={13} />}
-                            {c.faction === 'Орда' && <HordeCrest size={13} />}
-                            {c.faction}
-                          </button>
-                        )}
-                        <div className="chron-text">{paras(c.text)}</div>
+
+                    {general.length > 0 && (
+                      <div className="chron-overview">{general.map((c) => paras(c.text))}</div>
+                    )}
+
+                    {factions.map(([fac, entries]) => (
+                      <div className={`chron-faction-block ${factionClass(fac)}`} key={fac}>
+                        <button
+                          className={`faction-tag ${factionClass(fac)} faction-tag-btn`}
+                          onClick={() => onFaction(fac)}
+                        >
+                          {factionCrest(fac)}
+                          {fac}
+                        </button>
+                        <div className="chron-text">{entries.map((c) => paras(c.text))}</div>
                       </div>
                     ))}
                   </div>
