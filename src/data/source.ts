@@ -45,14 +45,43 @@ function normCharacter(c: Partial<Character>): Character {
     relations: arr(c.relations),
   };
 }
-function normZone(z: Partial<Zone>): Zone {
+// допускаем старые поля для миграции
+type LegacyZone = Partial<Zone> & {
+  alliance?: string;
+  horde?: string;
+  history?: { era?: string; text?: string }[];
+};
+function normZone(z: LegacyZone): Zone {
+  // миграция старого формата (alliance/horde/history) → chronicle, если новой летописи ещё нет
+  let chronicle = arr<{ faction?: string; era?: string; text?: string }>(z.chronicle);
+  if (chronicle.length === 0) {
+    const legacy: { faction: string; era: string; text: string }[] = [];
+    if (z.alliance?.trim()) legacy.push({ faction: 'Альянс', era: '', text: z.alliance });
+    if (z.horde?.trim()) legacy.push({ faction: 'Орда', era: '', text: z.horde });
+    for (const h of arr<{ era?: string; text?: string }>(z.history)) {
+      if (h?.text) legacy.push({ faction: '', era: h.era ?? '', text: h.text });
+    }
+    chronicle = legacy;
+  }
+  let factions = arr<string>(z.factions);
+  if (factions.length === 0) {
+    if (z.alliance?.trim()) factions.push('Альянс');
+    if (z.horde?.trim()) factions.push('Орда');
+  }
   return {
     id: String(z.id ?? cryptoId()),
     name: z.name ?? 'Безымянная зона',
     region: z.region ?? '',
-    alliance: z.alliance ?? '',
-    horde: z.horde ?? '',
-    history: arr(z.history),
+    factions,
+    inhabitants: arr(z.inhabitants),
+    rulers: arr(z.rulers),
+    settlementsMajor: arr(z.settlementsMajor),
+    settlementsMinor: arr(z.settlementsMinor),
+    chronicle: chronicle.map((c) => ({
+      faction: c.faction ?? '',
+      era: c.era ?? '',
+      text: c.text ?? '',
+    })),
     images: arr(z.images),
   };
 }

@@ -20,8 +20,8 @@ export default function ZonesPage({ zones, onSelect, initialRegion }: Props) {
       if (!q) return true;
       return (
         z.name.toLowerCase().includes(q) ||
-        z.alliance.toLowerCase().includes(q) ||
-        z.horde.toLowerCase().includes(q)
+        z.factions.some((f) => f.toLowerCase().includes(q)) ||
+        z.chronicle.some((c) => c.text.toLowerCase().includes(q))
       );
     });
   }, [zones, query, region]);
@@ -76,18 +76,23 @@ export default function ZonesPage({ zones, onSelect, initialRegion }: Props) {
               >
                 <h3>{z.name}</h3>
                 <span className="zone-region">{z.region}</span>
-                <div className="faction-tags">
-                  {z.alliance && (
-                    <span className="faction-tag alliance">
-                      <AllianceCrest size={14} /> Альянс
-                    </span>
-                  )}
-                  {z.horde && (
-                    <span className="faction-tag horde">
-                      <HordeCrest size={14} /> Орда
-                    </span>
-                  )}
-                </div>
+                {z.factions.length > 0 && (
+                  <div className="faction-tags">
+                    {z.factions.slice(0, 4).map((f) => (
+                      <span
+                        key={f}
+                        className={`faction-tag ${f === 'Альянс' ? 'alliance' : f === 'Орда' ? 'horde' : 'neutral'}`}
+                      >
+                        {f === 'Альянс' && <AllianceCrest size={14} />}
+                        {f === 'Орда' && <HordeCrest size={14} />}
+                        {f}
+                      </span>
+                    ))}
+                    {z.factions.length > 4 && (
+                      <span className="faction-tag neutral">+{z.factions.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

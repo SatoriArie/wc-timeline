@@ -60,8 +60,11 @@ export interface Character {
   relations: Relation[];
 }
 
-/** Запись летописи зоны для конкретной эпохи. */
-export interface ZoneEra {
+/** Запись летописи зоны: что делала фракция в конкретную эпоху. */
+export interface ZoneChronicle {
+  /** Фракция/орден (пусто = общая история зоны) */
+  faction: string;
+  /** Эпоха/дополнение (пусто = вне эпох) */
   era: string;
   text: string;
 }
@@ -70,12 +73,18 @@ export interface Zone {
   id: string;
   name: string;
   region: string;
-  /** Положение дел со стороны Альянса (HTML/текст) */
-  alliance: string;
-  /** Положение дел со стороны Орды (HTML/текст) */
-  horde: string;
-  /** Летопись зоны по эпохам */
-  history: ZoneEra[];
+  /** Принадлежность — фракции/ордены, оперировавшие в зоне */
+  factions: string[];
+  /** Обитатели — расы и существа */
+  inhabitants: string[];
+  /** Правители */
+  rulers: string[];
+  /** Крупные поселения */
+  settlementsMajor: string[];
+  /** Малые поселения */
+  settlementsMinor: string[];
+  /** Летопись: фракция × эпоха */
+  chronicle: ZoneChronicle[];
   images: string[];
 }
 

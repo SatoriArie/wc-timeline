@@ -8,9 +8,9 @@ import type {
   SourceType,
   TimelineEvent,
   Zone,
-  ZoneEra,
+  ZoneChronicle,
 } from '../data/types';
-import { eraOrder, regionOrder } from '../data';
+import { eraOrder, regionOrder, allFactionNames } from '../data';
 import Modal from './Modal';
 import { SOURCE_LABEL, SourceIcon } from './icons';
 
@@ -50,7 +50,7 @@ export default function EditModal({
 }: Props) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [sources, setSources] = useState<SourceRef[]>([]);
-  const [zoneHistory, setZoneHistory] = useState<ZoneEra[]>([]);
+  const [zoneChronicle, setZoneChronicle] = useState<ZoneChronicle[]>([]);
   const [relations, setRelations] = useState<Relation[]>([]);
 
   useEffect(() => {
@@ -88,11 +88,14 @@ export default function EditModal({
       setForm({
         name: z?.name ?? '',
         region: z?.region ?? '',
-        alliance: z?.alliance ?? '',
-        horde: z?.horde ?? '',
+        factions: lines(z?.factions),
+        inhabitants: lines(z?.inhabitants),
+        rulers: lines(z?.rulers),
+        settlementsMajor: lines(z?.settlementsMajor),
+        settlementsMinor: lines(z?.settlementsMinor),
         images: lines(z?.images),
       });
-      setZoneHistory(z?.history?.length ? z.history.map((h) => ({ ...h })) : []);
+      setZoneChronicle(z?.chronicle?.length ? z.chronicle.map((c) => ({ ...c })) : []);
     }
   }, [open, item, type]);
 
@@ -139,11 +142,14 @@ export default function EditModal({
         id: (item as Zone)?.id ?? slug(form.name),
         name: form.name,
         region: form.region,
-        alliance: form.alliance,
-        horde: form.horde,
-        history: zoneHistory
-          .filter((h) => h.text.trim() || h.era.trim())
-          .map((h) => ({ era: h.era.trim(), text: h.text })),
+        factions: toLines(form.factions),
+        inhabitants: toLines(form.inhabitants),
+        rulers: toLines(form.rulers),
+        settlementsMajor: toLines(form.settlementsMajor),
+        settlementsMinor: toLines(form.settlementsMinor),
+        chronicle: zoneChronicle
+          .filter((c) => c.text.trim())
+          .map((c) => ({ faction: c.faction.trim(), era: c.era.trim(), text: c.text })),
         images: toLines(form.images),
       } satisfies Zone;
     }
@@ -194,9 +200,12 @@ export default function EditModal({
           <>
             <Field label="Название" value={form.name} onChange={(v) => set('name', v)} />
             <Field label="Регион" value={form.region} onChange={(v) => set('region', v)} list="regions" />
-            <ZoneHistoryEditor history={zoneHistory} onChange={setZoneHistory} />
-            <Area label="Альянс (текущее положение)" value={form.alliance} onChange={(v) => set('alliance', v)} rows={4} />
-            <Area label="Орда (текущее положение)" value={form.horde} onChange={(v) => set('horde', v)} rows={4} />
+            <Area label="Принадлежность — фракции (по строке)" value={form.factions} onChange={(v) => set('factions', v)} />
+            <Area label="Обитатели (по строке)" value={form.inhabitants} onChange={(v) => set('inhabitants', v)} />
+            <Area label="Правители (по строке)" value={form.rulers} onChange={(v) => set('rulers', v)} />
+            <Area label="Крупные поселения (по строке)" value={form.settlementsMajor} onChange={(v) => set('settlementsMajor', v)} />
+            <Area label="Малые поселения (по строке)" value={form.settlementsMinor} onChange={(v) => set('settlementsMinor', v)} />
+            <ZoneChronicleEditor chronicle={zoneChronicle} onChange={setZoneChronicle} />
           </>
         )}
 
@@ -208,6 +217,11 @@ export default function EditModal({
         <datalist id="regions">
           {regionOrder.map((r) => (
             <option key={r} value={r} />
+          ))}
+        </datalist>
+        <datalist id="factions">
+          {allFactionNames.map((f) => (
+            <option key={f} value={f} />
           ))}
         </datalist>
 
@@ -387,37 +401,44 @@ function RelationsEditor({
   );
 }
 
-function ZoneHistoryEditor({
-  history,
+function ZoneChronicleEditor({
+  chronicle,
   onChange,
 }: {
-  history: ZoneEra[];
-  onChange: (h: ZoneEra[]) => void;
+  chronicle: ZoneChronicle[];
+  onChange: (c: ZoneChronicle[]) => void;
 }) {
-  const update = (i: number, patch: Partial<ZoneEra>) =>
-    onChange(history.map((h, idx) => (idx === i ? { ...h, ...patch } : h)));
-  const remove = (i: number) => onChange(history.filter((_, idx) => idx !== i));
-  const add = () => onChange([...history, { era: '', text: '' }]);
+  const update = (i: number, patch: Partial<ZoneChronicle>) =>
+    onChange(chronicle.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  const remove = (i: number) => onChange(chronicle.filter((_, idx) => idx !== i));
+  const add = () => onChange([...chronicle, { faction: '', era: '', text: '' }]);
 
   return (
     <div className="form-row">
-      <span>Летопись по эпохам</span>
+      <span>Летопись (фракция × эпоха)</span>
       <div className="zone-hist-editor">
-        {history.map((h, i) => (
+        {chronicle.map((c, i) => (
           <div className="zone-hist-row" key={i}>
             <div className="zone-hist-head">
               <input
                 className="zone-hist-era"
+                list="factions"
+                placeholder="Фракция (из списка; пусто = общее)"
+                value={c.faction}
+                onChange={(e) => update(i, { faction: e.target.value })}
+              />
+              <input
+                className="zone-hist-era"
                 list="eras"
-                placeholder="Эпоха (напр. Третья Война)"
-                value={h.era}
+                placeholder="Эпоха (пусто = вне эпох)"
+                value={c.era}
                 onChange={(e) => update(i, { era: e.target.value })}
               />
               <button
                 type="button"
                 className="source-del"
                 onClick={() => remove(i)}
-                title="Удалить эпоху"
+                title="Удалить запись"
               >
                 ✕
               </button>
@@ -425,14 +446,14 @@ function ZoneHistoryEditor({
             <textarea
               className="zone-hist-text"
               rows={3}
-              placeholder="Что происходило с зоной в эту эпоху…"
-              value={h.text}
+              placeholder="Что происходило в зоне (для этой фракции/эпохи)…"
+              value={c.text}
               onChange={(e) => update(i, { text: e.target.value })}
             />
           </div>
         ))}
         <button type="button" className="source-add" onClick={add}>
-          + Добавить эпоху
+          + Добавить запись
         </button>
       </div>
     </div>

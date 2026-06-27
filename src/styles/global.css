@@ -688,6 +688,7 @@ a {
 }
 .faction-tag.alliance { background: rgba(91, 141, 239, 0.18); color: #9cb9ff; border: 1px solid rgba(91, 141, 239, 0.6); }
 .faction-tag.horde { background: rgba(214, 72, 59, 0.18); color: #ff9b8f; border: 1px solid rgba(214, 72, 59, 0.6); }
+.faction-tag.neutral { background: rgba(255, 207, 87, 0.14); color: var(--gold-bright); border: 1px solid rgba(255, 207, 87, 0.5); }
 
 /* ===== Космология ===== */
 .cosmology-intro {
@@ -1102,36 +1103,56 @@ a {
 .rel-kin { border-left-color: #4a9e5c; }
 .rel-kin .ref-chip-avatar { background: linear-gradient(160deg, #2f6b40, #16301f); }
 
-/* летопись зоны по эпохам (просмотр) */
-.zone-history { display: flex; flex-direction: column; gap: 4px; }
-.zone-era {
-  position: relative;
-  padding: 4px 0 16px 22px;
-  border-left: 2px solid #c0a06a;
-  margin-left: 6px;
+/* инфобокс зоны */
+.zone-info { display: flex; flex-direction: column; gap: 10px; }
+.info-row { display: flex; gap: 12px; align-items: baseline; }
+.info-label {
+  flex-shrink: 0;
+  width: 150px;
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #8a5a26;
+  text-align: right;
 }
-.zone-era:last-child { border-left-color: transparent; padding-bottom: 2px; }
-.zone-era::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 6px;
-  width: 13px;
-  height: 13px;
-  background: linear-gradient(135deg, #c79a4e, #8b5a26);
-  border: 2px solid #f4ead2;
-  transform: rotate(45deg);
+.info-vals { display: flex; flex-wrap: wrap; gap: 6px; }
+.info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(139, 90, 38, 0.1);
+  border: 1px solid #c0a06a;
+  border-radius: 16px;
+  padding: 3px 11px;
+  font-size: 0.9rem;
+  color: #5a3d1c;
 }
-.zone-era-title {
+
+/* летопись зоны: блоки-эпохи с айдентикой дополнения */
+.zone-chronicle { display: flex; flex-direction: column; gap: 14px; }
+.chron-era {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ec) 45%, #c0a06a);
+  border-left: 4px solid var(--ec);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--ec) 14%, transparent), transparent 70%),
+    rgba(255, 253, 246, 0.5);
+  padding: 12px 16px;
+}
+.chron-era-head {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   font-family: var(--font-head);
   font-size: 1.05rem;
-  color: #6d3f12;
-  margin-bottom: 6px;
+  color: color-mix(in srgb, var(--ec) 55%, #3a2412);
+  margin-bottom: 10px;
 }
-.zone-era-body p { margin-bottom: 8px; }
+.chron-entry { margin-bottom: 10px; }
+.chron-entry:last-child { margin-bottom: 0; }
+.chron-faction { margin-bottom: 6px; }
+.chron-text p { margin-bottom: 6px; line-height: 1.6; }
 
 .faction-block { padding: 16px 18px; border-radius: 12px; margin-bottom: 14px; }
 .faction-block.alliance { background: rgba(91, 141, 239, 0.14); border-left: 4px solid var(--alliance); }

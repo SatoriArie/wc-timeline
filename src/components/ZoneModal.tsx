@@ -1,5 +1,5 @@
-import type { Zone } from '../data/types';
-import { eraOrder } from '../data';
+import type { Zone, ZoneChronicle } from '../data/types';
+import { eraOrder, eraTheme, shortEra } from '../data';
 import Modal from './Modal';
 import { AllianceCrest, EraSigil, HordeCrest } from './icons';
 
@@ -14,16 +14,56 @@ const paras = (text: string) =>
     .filter((p) => p.trim())
     .map((p, i) => <p key={i}>{p}</p>);
 
+/** Порядок эпох в летописи: «общее» (пусто) → канон-порядок → неизвестные. */
+function eraRank(era: string): number {
+  if (!era) return -1;
+  const i = eraOrder.indexOf(era);
+  return i === -1 ? 9999 : i;
+}
+
+function InfoRow({ label, items }: { label: string; items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="info-row">
+      <span className="info-label">{label}</span>
+      <div className="info-vals">
+        {items.map((v) => (
+          <span key={v} className="info-chip">
+            {v === 'Альянс' && <AllianceCrest size={13} />}
+            {v === 'Орда' && <HordeCrest size={13} />}
+            {v}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ZoneModal({ zone, onClose }: Props) {
-  const history = zone
-    ? [...zone.history]
-        .filter((h) => h.text.trim())
-        .sort((a, b) => {
-          const ia = eraOrder.indexOf(a.era);
-          const ib = eraOrder.indexOf(b.era);
-          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-        })
-    : [];
+  // группировка летописи по эпохам
+  const groups: { era: string; entries: ZoneChronicle[] }[] = [];
+  if (zone) {
+    const map = new Map<string, ZoneChronicle[]>();
+    for (const c of zone.chronicle) {
+      if (!c.text.trim()) continue;
+      if (!map.has(c.era)) map.set(c.era, []);
+      map.get(c.era)!.push(c);
+    }
+    groups.push(
+      ...[...map.entries()]
+        .map(([era, entries]) => ({ era, entries }))
+        .sort((a, b) => eraRank(a.era) - eraRank(b.era)),
+    );
+  }
+
+  const hasInfo =
+    zone &&
+    (zone.inhabitants.length ||
+      zone.rulers.length ||
+      zone.settlementsMajor.length ||
+      zone.settlementsMinor.length ||
+      zone.factions.length ||
+      zone.region);
 
   return (
     <Modal open={!!zone} onClose={onClose}>
@@ -33,46 +73,55 @@ export default function ZoneModal({ zone, onClose }: Props) {
           <span className="modal-subtitle">{zone.region}</span>
           <div className="modal-divider" />
 
-          {history.length > 0 && (
+          {hasInfo && (
+            <section>
+              <h3>Основные сведения</h3>
+              <div className="zone-info">
+                <InfoRow label="Обитатели" items={zone.inhabitants} />
+                <InfoRow label="Правители" items={zone.rulers} />
+                <InfoRow label="Крупные поселения" items={zone.settlementsMajor} />
+                <InfoRow label="Малые поселения" items={zone.settlementsMinor} />
+                <InfoRow label="Принадлежность" items={zone.factions} />
+                {zone.region && <InfoRow label="Регион" items={[zone.region]} />}
+              </div>
+            </section>
+          )}
+
+          {groups.length > 0 && (
             <section>
               <h3>Летопись зоны</h3>
-              <div className="zone-history">
-                {history.map((h, i) => (
-                  <div className="zone-era" key={i}>
-                    <h4 className="zone-era-title">
-                      <EraSigil index={Math.max(0, eraOrder.indexOf(h.era))} size={16} />
-                      {h.era}
-                    </h4>
-                    <div className="zone-era-body">{paras(h.text)}</div>
+              <div className="zone-chronicle">
+                {groups.map(({ era, entries }) => (
+                  <div
+                    className="chron-era"
+                    key={era || '__'}
+                    style={{ ['--ec' as string]: era ? eraTheme[era] || '#b58b4a' : '#b58b4a' }}
+                  >
+                    <div className="chron-era-head">
+                      {era ? <EraSigil index={Math.max(0, eraOrder.indexOf(era))} size={16} /> : null}
+                      <span>{era ? shortEra(era) : 'Общее положение'}</span>
+                    </div>
+                    {entries.map((c, i) => (
+                      <div className="chron-entry" key={i}>
+                        {c.faction && (
+                          <span
+                            className={`faction-tag ${c.faction === 'Альянс' ? 'alliance' : c.faction === 'Орда' ? 'horde' : 'neutral'} chron-faction`}
+                          >
+                            {c.faction === 'Альянс' && <AllianceCrest size={13} />}
+                            {c.faction === 'Орда' && <HordeCrest size={13} />}
+                            {c.faction}
+                          </span>
+                        )}
+                        <div className="chron-text">{paras(c.text)}</div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {(zone.alliance || zone.horde) && (
-            <section>
-              <h3>Положение дел</h3>
-              {zone.alliance && (
-                <div className="faction-block alliance">
-                  <h3>
-                    <AllianceCrest size={20} /> Альянс
-                  </h3>
-                  {paras(zone.alliance)}
-                </div>
-              )}
-              {zone.horde && (
-                <div className="faction-block horde">
-                  <h3>
-                    <HordeCrest size={20} /> Орда
-                  </h3>
-                  {paras(zone.horde)}
-                </div>
-              )}
-            </section>
-          )}
-
-          {history.length === 0 && !zone.alliance && !zone.horde && (
+          {!hasInfo && groups.length === 0 && (
             <p className="modal-meta">История зоны пока не заполнена.</p>
           )}
         </>

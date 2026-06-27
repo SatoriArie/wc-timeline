@@ -68,3 +68,6 @@ export const organizations: OrgGroup[] = [
     ],
   },
 ];
+
+/** Плоский список всех названий фракций/орденов — для выбора в редакторе зон. */
+export const allFactionNames: string[] = organizations.flatMap((g) => g.members.map((m) => m.name));
