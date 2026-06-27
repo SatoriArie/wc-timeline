@@ -43,6 +43,35 @@ export default function CharacterModal({
             <img className="modal-portrait" src={assetUrl(character.portrait)} alt={character.name} />
           ) : null}
 
+          {(character.race || character.gender || character.class || character.status) && (
+            <div className="char-meta">
+              {character.race && (
+                <span className="char-meta-item">
+                  <span className="char-meta-label">Раса</span>
+                  {character.race}
+                </span>
+              )}
+              {character.gender && (
+                <span className="char-meta-item">
+                  <span className="char-meta-label">Пол</span>
+                  {character.gender}
+                </span>
+              )}
+              {character.class && (
+                <span className="char-meta-item">
+                  <span className="char-meta-label">Класс</span>
+                  {character.class}
+                </span>
+              )}
+              {character.status && (
+                <span className="char-meta-item">
+                  <span className="char-meta-label">Статус</span>
+                  {character.status}
+                </span>
+              )}
+            </div>
+          )}
+
           <section>
             <h3>Биография</h3>
             <div dangerouslySetInnerHTML={{ __html: character.biography }} />
@@ -72,6 +101,19 @@ export default function CharacterModal({
                       <span className="rel-chip-kind">{r.note || KIND_LABEL[r.kind]}</span>
                     </span>
                   </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {character.affiliations.length > 0 && (
+            <section>
+              <h3>Принадлежность</h3>
+              <div className="tag-row">
+                {character.affiliations.map((a, i) => (
+                  <span key={i} className="affil-tag">
+                    {a}
+                  </span>
                 ))}
               </div>
             </section>

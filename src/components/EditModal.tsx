@@ -72,6 +72,11 @@ export default function EditModal({
         name: c?.name ?? '',
         title: c?.title ?? '',
         portrait: c?.portrait ?? '',
+        gender: c?.gender ?? '',
+        race: c?.race ?? '',
+        class: c?.class ?? '',
+        status: c?.status ?? '',
+        affiliations: lines(c?.affiliations),
         biography: c?.biography ?? '',
         role: c?.role ?? '',
         games: lines(c?.games),
@@ -116,6 +121,11 @@ export default function EditModal({
         name: form.name,
         title: form.title,
         portrait: form.portrait,
+        gender: form.gender,
+        race: form.race,
+        class: form.class,
+        status: form.status,
+        affiliations: toLines(form.affiliations),
         biography: form.biography.startsWith('<') ? form.biography : `<p>${form.biography}</p>`,
         role: form.role,
         games: toLines(form.games),
@@ -162,7 +172,12 @@ export default function EditModal({
           <>
             <Field label="Имя" value={form.name} onChange={(v) => set('name', v)} />
             <Field label="Титул" value={form.title} onChange={(v) => set('title', v)} />
+            <Field label="Пол" value={form.gender} onChange={(v) => set('gender', v)} />
+            <Field label="Раса" value={form.race} onChange={(v) => set('race', v)} />
+            <Field label="Класс" value={form.class} onChange={(v) => set('class', v)} />
+            <Field label="Статус (Жив / Погиб / Нежить…)" value={form.status} onChange={(v) => set('status', v)} />
             <Field label="Портрет (URL)" value={form.portrait} onChange={(v) => set('portrait', v)} />
+            <Area label="Принадлежность (по строке)" value={form.affiliations} onChange={(v) => set('affiliations', v)} />
             <Area label="Биография" value={form.biography} onChange={(v) => set('biography', v)} rows={6} />
             <Field label="Роль" value={form.role} onChange={(v) => set('role', v)} />
             <RelationsEditor

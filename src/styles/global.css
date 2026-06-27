@@ -1139,6 +1139,38 @@ a {
 .faction-block h3 { color: #3a2412; display: flex; align-items: center; gap: 10px; }
 .faction-block.alliance h3 svg { color: var(--alliance); }
 .faction-block.horde h3 svg { color: var(--horde); }
+/* мета-строка персонажа (раса/пол/класс/статус) */
+.char-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-bottom: 18px;
+}
+.char-meta-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: var(--ink-dark);
+  font-family: var(--font-body);
+}
+.char-meta-label {
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #8a5a26;
+}
+/* теги принадлежности */
+.affil-tag {
+  background: linear-gradient(160deg, rgba(139, 90, 38, 0.16), rgba(139, 90, 38, 0.06));
+  color: #5a3d1c;
+  border: 1px solid #b58b4a;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-family: var(--font-head);
+}
+
 .modal-portrait {
   width: 150px;
   height: 200px;

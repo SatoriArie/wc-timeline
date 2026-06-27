@@ -33,6 +33,11 @@ function normCharacter(c: Partial<Character>): Character {
     name: c.name ?? 'Безымянный',
     title: c.title ?? '',
     portrait: c.portrait ?? '',
+    gender: c.gender ?? '',
+    race: c.race ?? '',
+    class: c.class ?? '',
+    status: c.status ?? '',
+    affiliations: arr(c.affiliations),
     biography: c.biography ?? '',
     role: c.role ?? '',
     games: arr(c.games),
@@ -91,6 +96,11 @@ async function fetchCloud(): Promise<Content | null> {
   const by: Record<string, unknown> = {};
   for (const row of data) by[(row as { id: string }).id] = (row as { data: unknown }).data;
   return normalizeAll(by.events, by.characters, by.zones);
+}
+
+/** Принудительно загрузить базовые данные из репозитория (public/data), минуя облако. */
+export async function fetchRepo(): Promise<Content> {
+  return fetchStatic();
 }
 
 /** Загрузка контента: облако (если есть данные), иначе статика. */

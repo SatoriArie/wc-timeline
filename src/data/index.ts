@@ -11,6 +11,6 @@ export type {
   PageId,
 } from './types';
 export { eraOrder, regionOrder } from './order';
-export { fetchContent, saveDataset, seedCloud } from './source';
+export { fetchContent, fetchRepo, saveDataset, seedCloud } from './source';
 export type { Content, DatasetId } from './source';
 export { supabase, isCloud } from './supabase';

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Character, PageId, TimelineEvent, Zone } from './data/types';
 import { downloadJson, readJsonFile, useContent } from './hooks/useContent';
 import { useAuth } from './hooks/useAuth';
-import { isCloud, saveDataset, seedCloud, type DatasetId } from './data';
+import { isCloud, fetchRepo, saveDataset, seedCloud, type DatasetId } from './data';
 import { computeCrossRefs } from './utils/crossref';
 import Background from './components/Background';
 import EventsPage from './components/EventsPage';
@@ -14,11 +14,12 @@ import ZoneModal from './components/ZoneModal';
 import EditModal from './components/EditModal';
 import CosmologyPage from './components/CosmologyPage';
 import PantheonsPage from './components/PantheonsPage';
+import OrganizationsPage from './components/OrganizationsPage';
 import HomePage from './components/HomePage';
 import MapPage from './components/MapPage';
 
 type Entity = TimelineEvent | Character | Zone;
-type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'map';
+type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'organizations' | 'map';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Главная' },
@@ -28,9 +29,19 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'Карта' },
   { id: 'cosmology', label: 'Космология' },
   { id: 'pantheons', label: 'Пантеоны' },
+  { id: 'organizations', label: 'Фракции' },
 ];
 
-const TAB_IDS: Tab[] = ['home', 'events', 'characters', 'zones', 'map', 'cosmology', 'pantheons'];
+const TAB_IDS: Tab[] = [
+  'home',
+  'events',
+  'characters',
+  'zones',
+  'map',
+  'cosmology',
+  'pantheons',
+  'organizations',
+];
 
 /** Разбор URL-хэша вида #/event/<id>, #/character/<id>, #/zone/<id>, #/<tab>. */
 function parseHash(): { kind: string; id?: string } {
@@ -70,10 +81,12 @@ export default function App() {
   const pushCloud = (id: DatasetId, data: unknown[]) => {
     if (!isCloud) return;
     if (!auth.email) {
-      alert('Войдите как редактор, чтобы сохранить правки в облако.');
+      setAuthMsg('Войдите как редактор, чтобы сохранить правки в облако.');
       return;
     }
-    saveDataset(id, data).catch((e) => alert('Не удалось сохранить в облако: ' + e.message));
+    saveDataset(id, data)
+      .then(() => setAuthMsg('Сохранено в облако ✓'))
+      .catch((e) => setAuthMsg('Не удалось сохранить в облако: ' + e.message));
   };
 
   // просмотр
@@ -134,6 +147,20 @@ export default function App() {
       setAuthMsg('Текущие данные залиты в облако ✓');
     } catch (e) {
       setAuthMsg('Ошибка заливки: ' + (e as Error).message);
+    }
+  };
+
+  const handleSyncFromRepo = async () => {
+    if (!confirm('Заменить облако данными из репозитория? Несохранённые облачные правки будут перезаписаны.')) return;
+    try {
+      const fresh = await fetchRepo();
+      await seedCloud(fresh);
+      c.setEvents(fresh.events);
+      c.setCharacters(fresh.characters);
+      c.setZones(fresh.zones);
+      setAuthMsg('Облако обновлено из репозитория ✓');
+    } catch (e) {
+      setAuthMsg('Ошибка синхронизации: ' + (e as Error).message);
     }
   };
 
@@ -321,6 +348,9 @@ export default function App() {
                   <button className="icon-btn" onClick={handleSeedCloud}>
                     ⬆ Залить всё в облако
                   </button>
+                  <button className="icon-btn" onClick={handleSyncFromRepo}>
+                    ⟳ Обновить из репозитория
+                  </button>
                   <button className="icon-btn" onClick={exportCurrent}>
                     ⬇ Бэкап {dataFile}
                   </button>
@@ -439,6 +469,7 @@ export default function App() {
         )}
         {page === 'cosmology' && <CosmologyPage />}
         {page === 'pantheons' && <PantheonsPage />}
+        {page === 'organizations' && <OrganizationsPage />}
       </div>
 
       {editMode && isData && (

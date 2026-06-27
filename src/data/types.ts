@@ -41,6 +41,16 @@ export interface Character {
   name: string;
   title: string;
   portrait: string;
+  /** Пол (Мужской / Женский / —) */
+  gender: string;
+  /** Раса (Человек, Орк, Ночной эльф…) */
+  race: string;
+  /** Класс (Паладин, Маг, Чернокнижник…) */
+  class: string;
+  /** Статус (Жив / Погиб / Нежить / Заточён…) */
+  status: string;
+  /** Принадлежность — фракции/ордены/организации */
+  affiliations: string[];
   /** Биография (HTML) */
   biography: string;
   role: string;
