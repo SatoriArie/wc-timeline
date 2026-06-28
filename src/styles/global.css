@@ -1197,26 +1197,42 @@ a {
 .faction-block h3 { color: #3a2412; display: flex; align-items: center; gap: 10px; }
 .faction-block.alliance h3 svg { color: var(--alliance); }
 .faction-block.horde h3 svg { color: var(--horde); }
-/* мета-строка персонажа (раса/пол/класс/статус) */
+/* колонка слева: портрет + блок характеристик в своей области */
+.char-aside {
+  float: left;
+  width: 210px;
+  margin: 0 24px 16px 0;
+}
+/* панель характеристик персонажа (раса/пол/класс/статус) под портретом */
 .char-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 22px;
-  margin-bottom: 18px;
+  flex-direction: column;
+  margin-top: 16px;
+  background: rgba(139, 90, 38, 0.07);
+  border: 2px solid #cbb083;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  padding: 4px 14px;
 }
 .char-meta-item {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 1rem;
   color: var(--ink-dark);
   font-family: var(--font-body);
+  padding: 9px 0;
+  text-align: right;
 }
+.char-meta-item + .char-meta-item { border-top: 1px dashed #cbb083; }
 .char-meta-label {
   font-family: var(--font-head);
   font-size: 0.72rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #8a5a26;
+  text-align: left;
 }
 /* теги принадлежности */
 .affil-tag {
@@ -1260,16 +1276,36 @@ a {
 }
 
 .modal-portrait {
-  width: 150px;
-  height: 200px;
+  display: block;
+  width: 100%;
+  height: 280px;
   border-radius: 12px;
-  border: 3px solid #8b5a26;
+  border: 2px solid #cbb083;
   object-fit: cover;
-  float: left;
-  margin: 0 22px 14px 0;
   background: #24344f;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 }
+
+/* класс с иконкой и раса-трансформация в мета-строке */
+.class-value-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #b58b4a;
+  object-fit: cover;
+}
+.char-clear { clear: both; }
+/* раса-трансформация в узкой панели: «было ↓ стало» */
+.race-transform {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  line-height: 1.2;
+}
+.race-from,
+.race-to { color: var(--ink-dark); font-weight: 400; }
+.race-arrow { color: #a0432b; font-weight: 700; font-size: 0.85em; }
 
 /* ===== Edit ===== */
 .edit-banner {
@@ -1363,7 +1399,88 @@ a {
 }
 .form-row input:focus,
 .form-row textarea:focus { border-color: #8b5a26; box-shadow: 0 0 8px rgba(139, 90, 38, 0.35); }
-.form-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+
+/* выпадающие списки формы (пол/класс) — в стиле полей */
+.form-select {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink-dark);
+  background: #fffdf6;
+  border: 1px solid #c0a06a;
+  border-radius: 8px;
+  padding: 10px 13px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8b5a26 50%),
+    linear-gradient(135deg, #8b5a26 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.form-select:focus { border-color: #8b5a26; box-shadow: 0 0 8px rgba(139, 90, 38, 0.35); }
+
+/* раса + трансформация в две колонки */
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* класс: иконка слева от селекта */
+.class-select-row { display: flex; align-items: stretch; gap: 10px; }
+.class-select-row .class-select { flex: 1; }
+.class-select-ico {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid #c0a06a;
+  object-fit: cover;
+  background: #fffdf6;
+}
+.class-select-ico-empty {
+  display: block;
+  background:
+    repeating-linear-gradient(45deg, #f1e6d2, #f1e6d2 5px, #e8d8bd 5px, #e8d8bd 10px);
+}
+
+/* ===== Кнопки формы редактирования ===== */
+.form-actions { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.form-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-head);
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  padding: 12px 26px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.form-btn:hover { transform: translateY(-1px); }
+.form-btn:active { transform: translateY(0); }
+.form-btn-ico { font-size: 1.05em; line-height: 1; }
+.form-btn-save {
+  color: #2a1a08;
+  background: linear-gradient(160deg, #f4c965, #d49a3a);
+  border-color: #b87f2c;
+  box-shadow: 0 6px 16px rgba(180, 127, 44, 0.35);
+}
+.form-btn-save:hover { filter: brightness(1.06); box-shadow: 0 8px 22px rgba(180, 127, 44, 0.5); }
+.form-btn-cancel {
+  color: #5a3d1c;
+  background: #f6ecd8;
+  border-color: #c0a06a;
+}
+.form-btn-cancel:hover { background: #efe1c5; border-color: #8b5a26; }
+.form-btn-delete {
+  color: #fff;
+  background: linear-gradient(160deg, #c2503a, #9a3322);
+  border-color: #832a1b;
+  box-shadow: 0 6px 16px rgba(154, 51, 34, 0.3);
+  margin-left: auto;
+}
+.form-btn-delete:hover { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(154, 51, 34, 0.45); }
 
 /* редактор источников */
 .source-editor { display: flex; flex-direction: column; gap: 8px; }

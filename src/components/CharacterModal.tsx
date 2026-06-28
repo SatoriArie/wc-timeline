@@ -1,6 +1,7 @@
 import type { Character, RelationKind, TimelineEvent } from '../data/types';
 import Modal from './Modal';
 import { assetUrl } from '../utils/asset';
+import { classIcon } from '../data';
 
 interface RelationView {
   character: Character;
@@ -41,16 +42,30 @@ export default function CharacterModal({
           <span className="modal-subtitle">{character.title}</span>
           <div className="modal-divider" />
 
-          {character.portrait ? (
-            <img className="modal-portrait" src={assetUrl(character.portrait)} alt={character.name} />
-          ) : null}
+          {(character.portrait ||
+            character.race ||
+            character.gender ||
+            character.class ||
+            character.status) && (
+            <div className="char-aside">
+              {character.portrait ? (
+                <img className="modal-portrait" src={assetUrl(character.portrait)} alt={character.name} />
+              ) : null}
 
-          {(character.race || character.gender || character.class || character.status) && (
-            <div className="char-meta">
+              {(character.race || character.gender || character.class || character.status) && (
+                <div className="char-meta">
               {character.race && (
                 <span className="char-meta-item">
                   <span className="char-meta-label">Раса</span>
-                  {character.race}
+                  {character.raceTransform ? (
+                    <span className="race-transform">
+                      <span className="race-from">{character.race}</span>
+                      <span className="race-arrow">↓</span>
+                      <span className="race-to">{character.raceTransform}</span>
+                    </span>
+                  ) : (
+                    character.race
+                  )}
                 </span>
               )}
               {character.gender && (
@@ -62,7 +77,16 @@ export default function CharacterModal({
               {character.class && (
                 <span className="char-meta-item">
                   <span className="char-meta-label">Класс</span>
-                  {character.class}
+                  {classIcon(character.class) ? (
+                    <img
+                      className="class-value-ico"
+                      src={classIcon(character.class)!}
+                      alt={character.class}
+                      title={character.class}
+                    />
+                  ) : (
+                    character.class
+                  )}
                 </span>
               )}
               {character.status && (
@@ -70,6 +94,8 @@ export default function CharacterModal({
                   <span className="char-meta-label">Статус</span>
                   {character.status}
                 </span>
+              )}
+                </div>
               )}
             </div>
           )}
@@ -79,12 +105,8 @@ export default function CharacterModal({
             <div dangerouslySetInnerHTML={{ __html: character.biography }} />
           </section>
 
-          {character.role && (
-            <section>
-              <h3>Роль</h3>
-              <p className="modal-meta">{character.role}</p>
-            </section>
-          )}
+          {/* дальше — на всю ширину, под колонкой с портретом */}
+          <div className="char-clear" />
 
           {relations.length > 0 && (
             <section>

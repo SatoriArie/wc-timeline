@@ -11,7 +11,16 @@ import type {
   Zone,
   ZoneChronicle,
 } from '../data/types';
-import { eraOrder, regionOrder, orgCategoryOrder } from '../data';
+import {
+  eraOrder,
+  regionOrder,
+  orgCategoryOrder,
+  genderOptions,
+  classOptions,
+  raceOptions,
+  classIcon,
+  findClass,
+} from '../data';
 import Modal from './Modal';
 import { SOURCE_LABEL, SourceIcon } from './icons';
 
@@ -77,7 +86,9 @@ export default function EditModal({
         portrait: c?.portrait ?? '',
         gender: c?.gender ?? '',
         race: c?.race ?? '',
-        class: c?.class ?? '',
+        raceTransform: c?.raceTransform ?? '',
+        // приводим класс к каноничному имени (терпит регистр/слаг), чтобы дропдаун отобразил его
+        class: findClass(c?.class)?.name ?? c?.class ?? '',
         status: c?.status ?? '',
         affiliations: lines(c?.affiliations),
         biography: c?.biography ?? '',
@@ -138,6 +149,7 @@ export default function EditModal({
         portrait: form.portrait,
         gender: form.gender,
         race: form.race,
+        raceTransform: form.raceTransform,
         class: form.class,
         status: form.status,
         affiliations: toLines(form.affiliations),
@@ -206,13 +218,25 @@ export default function EditModal({
           <>
             <Field label="Имя" value={form.name} onChange={(v) => set('name', v)} />
             <Field label="Титул" value={form.title} onChange={(v) => set('title', v)} />
-            <Field label="Пол" value={form.gender} onChange={(v) => set('gender', v)} />
-            <Field label="Раса" value={form.race} onChange={(v) => set('race', v)} />
-            <Field label="Класс" value={form.class} onChange={(v) => set('class', v)} />
+            <SelectField
+              label="Пол"
+              value={form.gender}
+              onChange={(v) => set('gender', v)}
+              options={genderOptions.map((g) => ({ value: g, label: g }))}
+            />
+            <div className="form-grid-2">
+              <Field label="Раса" value={form.race} onChange={(v) => set('race', v)} list="races" />
+              <Field
+                label="Стал(а) — трансформация"
+                value={form.raceTransform}
+                onChange={(v) => set('raceTransform', v)}
+                list="races"
+              />
+            </div>
+            <ClassField value={form.class} onChange={(v) => set('class', v)} />
             <Field label="Статус (Жив / Погиб / Нежить…)" value={form.status} onChange={(v) => set('status', v)} />
             <Field label="Портрет (URL)" value={form.portrait} onChange={(v) => set('portrait', v)} />
             <Area label="Биография" value={form.biography} onChange={(v) => set('biography', v)} rows={6} />
-            <Field label="Роль" value={form.role} onChange={(v) => set('role', v)} />
             <RelationsEditor
               relations={relations}
               onChange={setRelations}
@@ -274,26 +298,30 @@ export default function EditModal({
             <option key={cat} value={cat} />
           ))}
         </datalist>
+        <datalist id="races">
+          {raceOptions.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
 
         <div className="form-actions">
-          <button className="icon-btn active" onClick={handleSave}>
-            Сохранить
+          <button className="form-btn form-btn-save" onClick={handleSave}>
+            <span className="form-btn-ico">✓</span> Сохранить
+          </button>
+          <button className="form-btn form-btn-cancel" onClick={onClose}>
+            Отмена
           </button>
           {item && onDelete && (
             <button
-              className="icon-btn"
-              style={{ borderColor: 'var(--horde)', color: '#ff8c7a' }}
+              className="form-btn form-btn-delete"
               onClick={() => {
                 onDelete((item as { id: string }).id);
                 onClose();
               }}
             >
-              Удалить
+              <span className="form-btn-ico">🗑</span> Удалить
             </button>
           )}
-          <button className="icon-btn" onClick={onClose}>
-            Отмена
-          </button>
         </div>
       </div>
     </Modal>
@@ -315,6 +343,66 @@ function Field({
     <label className="form-row">
       <span>{label}</span>
       <input value={value ?? ''} list={list} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <label className="form-row">
+      <span>{label}</span>
+      <select className="form-select" value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+        <option value="">—</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ClassField({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (v: string) => void;
+}) {
+  const icon = classIcon(value);
+  return (
+    <label className="form-row">
+      <span>Класс</span>
+      <div className="class-select-row">
+        {icon ? (
+          <img className="class-select-ico" src={icon} alt="" />
+        ) : (
+          <span className="class-select-ico class-select-ico-empty" />
+        )}
+        <select
+          className="form-select class-select"
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">—</option>
+          {classOptions.map((c) => (
+            <option key={c.slug} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </label>
   );
 }

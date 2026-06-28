@@ -36,6 +36,7 @@ function normCharacter(c: Partial<Character>): Character {
     portrait: c.portrait ?? '',
     gender: c.gender ?? '',
     race: c.race ?? '',
+    raceTransform: c.raceTransform ?? '',
     class: c.class ?? '',
     status: c.status ?? '',
     affiliations: arr(c.affiliations),
