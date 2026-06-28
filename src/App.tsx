@@ -11,6 +11,7 @@ import ZonesPage from './components/ZonesPage';
 import EventModal from './components/EventModal';
 import CharacterModal from './components/CharacterModal';
 import ZoneModal from './components/ZoneModal';
+import OrganizationModal from './components/OrganizationModal';
 import EditModal from './components/EditModal';
 import CosmologyPage from './components/CosmologyPage';
 import PantheonsPage from './components/PantheonsPage';
@@ -54,6 +55,7 @@ function hashToTab(kind: string): Tab {
   if (kind === 'event') return 'events';
   if (kind === 'character') return 'characters';
   if (kind === 'zone') return 'zones';
+  if (kind === 'faction') return 'organizations';
   return 'events';
 }
 
@@ -95,6 +97,7 @@ export default function App() {
   const [activeEvent, setActiveEvent] = useState<TimelineEvent | null>(null);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [activeZone, setActiveZone] = useState<Zone | null>(null);
+  const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
 
   // редактирование
   const [editing, setEditing] = useState<{ open: boolean; item: Entity | null }>({
@@ -109,9 +112,8 @@ export default function App() {
     characters: (ch: Character) =>
       editMode ? setEditing({ open: true, item: ch }) : setActiveCharacter(ch),
     zones: (z: Zone) => (editMode ? setEditing({ open: true, item: z }) : setActiveZone(z)),
-    organizations: (o: Organization) => {
-      if (editMode) setEditing({ open: true, item: o });
-    },
+    organizations: (o: Organization) =>
+      editMode ? setEditing({ open: true, item: o }) : setActiveOrg(o),
   };
 
   const saveEntity = (item: Entity) => {
@@ -237,6 +239,48 @@ export default function App() {
         .filter((r) => r.character)
     : [];
 
+  // данные для карточки фракции: состав, зоны влияния, летопись
+  const orgMembers = useMemo(
+    () =>
+      activeOrg
+        ? c.characters.filter((ch) => ch.affiliations.includes(activeOrg.name))
+        : [],
+    [activeOrg, c.characters],
+  );
+  const orgZones = useMemo(
+    () => (activeOrg ? c.zones.filter((z) => z.factions.includes(activeOrg.name)) : []),
+    [activeOrg, c.zones],
+  );
+  const orgChronicle = useMemo(() => {
+    if (!activeOrg) return [];
+    const out: { zoneId: string; zoneName: string; era: string; text: string }[] = [];
+    for (const z of c.zones) {
+      for (const ch of z.chronicle) {
+        if (ch.faction === activeOrg.name && ch.text.trim()) {
+          out.push({ zoneId: z.id, zoneName: z.name, era: ch.era, text: ch.text });
+        }
+      }
+    }
+    return out;
+  }, [activeOrg, c.zones]);
+
+  const closeAll = () => {
+    setActiveEvent(null);
+    setActiveCharacter(null);
+    setActiveZone(null);
+    setActiveOrg(null);
+  };
+  const openOrgChar = (id: string) => {
+    const ch = charsById[id];
+    if (!ch) return;
+    setActiveOrg(null);
+    setTimeout(() => setActiveCharacter(ch), 250);
+  };
+  const openOrgZone = (z: Zone) => {
+    setActiveOrg(null);
+    setTimeout(() => setActiveZone(z), 250);
+  };
+
   const openEventFromRef = (e: TimelineEvent) => {
     setActiveCharacter(null);
     setTimeout(() => setActiveEvent(e), 250);
@@ -248,16 +292,24 @@ export default function App() {
     setTimeout(() => setActiveCharacter(ch), 250);
   };
   const openFaction = (name: string) => {
-    setActiveCharacter(null);
-    setActiveZone(null);
-    setActiveEvent(null);
+    const org = c.organizations.find((o) => o.name === name);
+    if (org) {
+      // открыть детальную карточку фракции
+      setActiveCharacter(null);
+      setActiveZone(null);
+      setActiveEvent(null);
+      setTimeout(() => setActiveOrg(org), 250);
+      return;
+    }
+    // нет такой организации — перейти на вкладку и подсветить (старое поведение)
+    closeAll();
     setFactionTarget(name);
     setPage('organizations');
   };
 
   // ===== Дип-линки: синхронизация URL-хэша с открытым контентом =====
-  const lookup = useRef({ eventsById, charsById, zones: c.zones });
-  lookup.current = { eventsById, charsById, zones: c.zones };
+  const lookup = useRef({ eventsById, charsById, zones: c.zones, orgs: c.organizations });
+  lookup.current = { eventsById, charsById, zones: c.zones, orgs: c.organizations };
   const bootHash = useRef(parseHash()); // снимок хэша на первом рендере
   const linkReady = useRef(false);
 
@@ -266,6 +318,7 @@ export default function App() {
     setActiveEvent(null);
     setActiveCharacter(null);
     setActiveZone(null);
+    setActiveOrg(null);
     if (kind === 'event' && id && lookup.current.eventsById[id]) {
       setPage('events');
       setActiveEvent(lookup.current.eventsById[id]);
@@ -277,6 +330,12 @@ export default function App() {
       if (z) {
         setPage('zones');
         setActiveZone(z);
+      }
+    } else if (kind === 'faction' && id) {
+      const o = lookup.current.orgs.find((x) => x.id === id);
+      if (o) {
+        setPage('organizations');
+        setActiveOrg(o);
       }
     } else {
       setPage(hashToTab(kind));
@@ -307,10 +366,11 @@ export default function App() {
     if (activeEvent) hash = `#/event/${encodeURIComponent(activeEvent.id)}`;
     else if (activeCharacter) hash = `#/character/${encodeURIComponent(activeCharacter.id)}`;
     else if (activeZone) hash = `#/zone/${encodeURIComponent(activeZone.id)}`;
+    else if (activeOrg) hash = `#/faction/${encodeURIComponent(activeOrg.id)}`;
     if (window.location.hash !== hash) {
       window.history.replaceState(null, '', hash);
     }
-  }, [page, activeEvent, activeCharacter, activeZone]);
+  }, [page, activeEvent, activeCharacter, activeZone, activeOrg]);
 
   return (
     <>
@@ -541,6 +601,15 @@ export default function App() {
         onFaction={openFaction}
       />
       <ZoneModal zone={activeZone} onClose={() => setActiveZone(null)} onFaction={openFaction} />
+      <OrganizationModal
+        organization={activeOrg}
+        members={orgMembers}
+        zones={orgZones}
+        chronicle={orgChronicle}
+        onClose={() => setActiveOrg(null)}
+        onCharacter={openOrgChar}
+        onZone={openOrgZone}
+      />
 
       {/* Редактирование */}
       <EditModal

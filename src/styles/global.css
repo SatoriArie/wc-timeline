@@ -1275,6 +1275,44 @@ a {
   }
 }
 
+/* ===== Карточка фракции (модалка организации) ===== */
+.org-modal { --accent: #b58b4a; }
+.org-head { display: flex; align-items: center; gap: 16px; }
+.org-head h2 { margin: 0; }
+.org-emblem {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1.7rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+.org-modal h3 {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+}
+.org-note { color: var(--ink-dark); line-height: 1.6; }
+.org-chron-entry { margin-bottom: 12px; }
+.org-chron-entry:last-child { margin-bottom: 0; }
+.org-chron-zone {
+  display: inline-block;
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  color: var(--ec, #8a5a26);
+  background: color-mix(in srgb, var(--ec, #8a5a26) 14%, transparent);
+  border-radius: 6px;
+  padding: 2px 9px;
+  margin-bottom: 4px;
+}
+
 .modal-portrait {
   display: block;
   width: 100%;
