@@ -203,8 +203,22 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
           >
             <FitBounds />
             <FlyTo target={flyTarget} />
-            <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} />
-            <ImageOverlay url={assetUrl('images/map/azeroth-map.webp')} bounds={BOUNDS} />
+            {/* как на classic+: фон → overlay(сетка/водоворот/виньетка) → карта; все зумятся с картой */}
+            <ImageOverlay
+              url={assetUrl('images/map/azeroth-bg.webp')}
+              bounds={BOUNDS}
+              interactive={false}
+            />
+            <ImageOverlay
+              url={assetUrl('images/map/azeroth-overlay.webp')}
+              bounds={BOUNDS}
+              interactive={false}
+            />
+            <ImageOverlay
+              url={assetUrl('images/map/azeroth-map.webp')}
+              bounds={BOUNDS}
+              interactive={false}
+            />
 
             {/* зоны-хотспоты регионов — подсветка при наведении */}
             {REGIONS.map((r) => (
@@ -252,10 +266,6 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
               </Marker>
             ))}
           </MapContainer>
-            <div
-              className="map-vignette"
-              style={{ backgroundImage: `url(${assetUrl('images/map/azeroth-overlay.webp')})` }}
-            />
             <div className="map-attribution">Карта © Blizzard Entertainment</div>
           </div>
 
