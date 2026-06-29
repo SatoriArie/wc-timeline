@@ -87,6 +87,16 @@ function normZone(z: LegacyZone): Zone {
     images: arr(z.images),
     ...(Number.isFinite(z.mapX) ? { mapX: z.mapX } : {}),
     ...(Number.isFinite(z.mapY) ? { mapY: z.mapY } : {}),
+    ...(Array.isArray(z.poly)
+      ? {
+          poly: (z.poly as unknown[])
+            .filter(
+              (p): p is [number, number] =>
+                Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'number'),
+            )
+            .map((p) => [p[0], p[1]] as [number, number]),
+        }
+      : {}),
   };
 }
 function normOrg(o: Partial<Organization>): Organization {

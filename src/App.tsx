@@ -142,6 +142,12 @@ export default function App() {
     pushCloud('zones', next);
   };
 
+  const saveZonePoly = (id: string, poly: [number, number][]) => {
+    const next = c.zones.map((z) => (z.id === id ? { ...z, poly } : z));
+    c.setZones(next);
+    pushCloud('zones', next);
+  };
+
   const deleteEntity = (id: string) => {
     if (page === 'events') {
       const next = c.events.filter((x) => x.id !== id);
@@ -564,6 +570,7 @@ export default function App() {
             editMode={editMode}
             onZone={openForView.zones}
             onPlaceZone={saveZoneCoords}
+            onSavePoly={saveZonePoly}
           />
         )}
         {page === 'cosmology' && <CosmologyPage />}

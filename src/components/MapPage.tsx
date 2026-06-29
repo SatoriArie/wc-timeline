@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, ImageOverlay, Marker, Polygon, Tooltip, useMap } from 'react-leaflet';
+import {
+  MapContainer,
+  ImageOverlay,
+  Marker,
+  Polygon,
+  Polyline,
+  Tooltip,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MapPin, MapPinCategory, Zone } from '../data/types';
@@ -11,6 +20,7 @@ interface Props {
   editMode: boolean;
   onZone: (z: Zone) => void;
   onPlaceZone: (id: string, x: number, y: number) => void;
+  onSavePoly: (id: string, poly: [number, number][]) => void;
 }
 
 // Система координат карты-подложки (px, верхний-левый угол) = размеры картинки.
@@ -80,6 +90,23 @@ function FlyTo({ target }: { target: { x: number; y: number; k: number } | null 
   return null;
 }
 
+/** Клик по карте в режиме обводки → добавить вершину. */
+function ClickToAdd({ active, onAdd }: { active: boolean; onAdd: (x: number, y: number) => void }) {
+  useMapEvents({
+    click(e) {
+      if (active) onAdd(Math.round(e.latlng.lng), Math.round(H - e.latlng.lat));
+    },
+  });
+  return null;
+}
+
+const vertexIcon = L.divIcon({
+  className: 'map-vertex-wrap',
+  html: '<span class="map-vertex"></span>',
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+});
+
 type SortMode = 'trending' | 'name' | 'pins';
 
 /** Русское склонение слова «точка». */
@@ -91,11 +118,15 @@ function pts(n: number): string {
   return `${n} точек`;
 }
 
-export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props) {
+export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePoly }: Props) {
   const [query, setQuery] = useState('');
   const [hoverRegion, setHoverRegion] = useState<string | null>(null);
   const [hoverPin, setHoverPin] = useState<string | null>(null);
+  const [hoverZonePoly, setHoverZonePoly] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; k: number } | null>(null);
+  // обводка зоны
+  const [drawId, setDrawId] = useState<string | null>(null);
+  const [drawPts, setDrawPts] = useState<[number, number][]>([]);
   const [enabled, setEnabled] = useState<Set<MapPinCategory>>(
     () => new Set(PIN_CATEGORIES.map((c) => c.id)),
   );
@@ -204,6 +235,27 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
     if (z) onZone(z);
   };
 
+  const startDraw = (z: Zone) => {
+    setDrawId(z.id);
+    setDrawPts((z.poly ?? []).map((p) => [p[0], p[1]]));
+    const c = zoneCoord.get(z.name);
+    if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
+  };
+  const addPt = (x: number, y: number) => setDrawPts((p) => [...p, [x, y]]);
+  const movePt = (i: number, x: number, y: number) =>
+    setDrawPts((p) => p.map((pt, idx) => (idx === i ? [x, y] : pt)));
+  const removePt = (i: number) => setDrawPts((p) => p.filter((_, idx) => idx !== i));
+  const finishDraw = () => {
+    if (drawId) onSavePoly(drawId, drawPts);
+    setDrawId(null);
+    setDrawPts([]);
+  };
+  const cancelDraw = () => {
+    setDrawId(null);
+    setDrawPts([]);
+  };
+  const drawingZone = drawId ? zones.find((z) => z.id === drawId) : null;
+
   return (
     <div className="mapview">
       <div className="map-layout">
@@ -229,9 +281,38 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
               <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} interactive={false} />
               <ImageOverlay url={assetUrl('images/map/azeroth-overlay.webp')} bounds={BOUNDS} interactive={false} />
               <ImageOverlay url={assetUrl('images/map/azeroth-map.webp')} bounds={BOUNDS} interactive={false} />
+              <ClickToAdd active={!!drawId} onAdd={addPt} />
 
-              {/* регионы-хотспоты */}
-              {REGIONS.map((r) => {
+              {/* контуры зон (обводка) */}
+              {zones.map((z) =>
+                z.poly && z.poly.length >= 3 && z.id !== drawId ? (
+                  <Polygon
+                    key={`poly-${z.id}`}
+                    positions={z.poly.map((p) => at(p[0], p[1]))}
+                    interactive={!drawId}
+                    pathOptions={{
+                      color: '#ffcf57',
+                      weight: hoverZonePoly === z.id ? 2.5 : 1.5,
+                      opacity: drawId ? 0.25 : hoverZonePoly === z.id ? 0.9 : 0.45,
+                      fillColor: '#ffcf57',
+                      fillOpacity: hoverZonePoly === z.id ? 0.22 : 0.05,
+                    }}
+                    eventHandlers={{
+                      click: () => onZone(z),
+                      mouseover: () => setHoverZonePoly(z.id),
+                      mouseout: () => setHoverZonePoly(null),
+                    }}
+                  >
+                    <Tooltip direction="center" className="map-region-tip" sticky>
+                      {z.name}
+                    </Tooltip>
+                  </Polygon>
+                ) : null,
+              )}
+
+              {/* регионы-хотспоты (запаска, прячем во время обводки) */}
+              {!drawId &&
+                REGIONS.map((r) => {
                 const half = 720;
                 const halfH = 640;
                 return (
@@ -262,8 +343,9 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
                 );
               })}
 
-              {/* точки */}
-              {visiblePins.map(({ pin, x, y }) => {
+              {/* точки (прячем во время обводки) */}
+              {!drawId &&
+                visiblePins.map(({ pin, x, y }) => {
                 const isZone = pin.category === 'zone';
                 const draggable = editMode && isZone;
                 return (
@@ -295,9 +377,42 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
                   </Marker>
                 );
               })}
+
+              {/* слой обводки */}
+              {drawId && drawPts.length >= 3 && (
+                <Polygon
+                  positions={drawPts.map((p) => at(p[0], p[1]))}
+                  interactive={false}
+                  pathOptions={{ color: '#ffcf57', weight: 2, fillColor: '#ffcf57', fillOpacity: 0.18 }}
+                />
+              )}
+              {drawId && drawPts.length === 2 && (
+                <Polyline
+                  positions={drawPts.map((p) => at(p[0], p[1]))}
+                  interactive={false}
+                  pathOptions={{ color: '#ffcf57', weight: 2 }}
+                />
+              )}
+              {drawId &&
+                drawPts.map((p, i) => (
+                  <Marker
+                    key={`v-${i}`}
+                    position={at(p[0], p[1])}
+                    icon={vertexIcon}
+                    draggable
+                    eventHandlers={{
+                      click: () => removePt(i),
+                      dragend: (e) => {
+                        const ll = (e.target as L.Marker).getLatLng();
+                        movePt(i, Math.round(ll.lng), Math.round(H - ll.lat));
+                      },
+                    }}
+                  />
+                ))}
             </MapContainer>
 
-            {/* левая панель фильтров */}
+            {/* левая панель фильтров (прячем во время обводки) */}
+            {!drawId && (
             <div className={`map-filters ${panelOpen ? 'open' : 'collapsed'}`}>
               <button
                 className="map-filters-toggle"
@@ -346,14 +461,33 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
                 </div>
               )}
             </div>
+            )}
+
+            {drawId && (
+              <div className="map-draw-bar">
+                <span className="map-draw-title">Обводка: {drawingZone?.name}</span>
+                <span className="map-draw-count">{drawPts.length} точек</span>
+                <button className="map-draw-btn done" onClick={finishDraw}>
+                  ✓ Готово
+                </button>
+                <button className="map-draw-btn" onClick={() => setDrawPts([])}>
+                  Очистить
+                </button>
+                <button className="map-draw-btn cancel" onClick={cancelDraw}>
+                  Отмена
+                </button>
+              </div>
+            )}
 
             <div className="map-attribution">Карта © Blizzard Entertainment</div>
           </div>
 
           <div className="map-hint">
-            {editMode
-              ? 'Режим редактирования: перетащи пин зоны, чтобы разместить её на карте.'
-              : 'Колесо — зум, перетаскивание — двигать карту. Клик по точке — открыть зону.'}
+            {drawId
+              ? 'Кликай по краю зоны — ставь точки контура. Точку тащи — двигать, клик по точке — удалить. Затем «Готово».'
+              : editMode
+                ? 'Режим редактирования: перетащи пин зоны или нажми «Обвести» у зоны в списке.'
+                : 'Колесо — зум, перетаскивание — двигать карту. Клик по точке — открыть зону.'}
           </div>
         </div>
 
@@ -401,7 +535,7 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
               const c = zoneCoord.get(z.name);
               const cnt = pinsPerZone[z.name] ?? 0;
               return (
-                <button
+                <div
                   key={z.id}
                   className="map-zone-card"
                   style={
@@ -422,8 +556,20 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
                   <span className="map-zone-card-region">
                     {z.region}
                     {cnt > 1 && <span className="map-zone-card-pins"> · {pts(cnt)}</span>}
+                    {z.poly && z.poly.length >= 3 && <span className="map-zone-card-poly"> · контур ✓</span>}
                   </span>
-                </button>
+                  {editMode && (
+                    <button
+                      className="map-trace-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startDraw(z);
+                      }}
+                    >
+                      {z.poly && z.poly.length >= 3 ? 'Править контур' : 'Обвести'}
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
