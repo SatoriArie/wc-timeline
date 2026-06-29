@@ -12,9 +12,9 @@ interface Props {
   onPlaceZone: (id: string, x: number, y: number) => void;
 }
 
-// Система координат карты-подложки (px, верхний-левый угол).
-const W = 2000;
-const H = 1400;
+// Система координат карты-подложки (px, верхний-левый угол) = размеры картинки.
+const W = 10500;
+const H = 8416;
 const BOUNDS: L.LatLngBoundsExpression = [
   [0, 0],
   [H, W],
@@ -27,19 +27,20 @@ interface RegionDef {
   cx: number;
   cy: number;
 }
+// центры регионов — доли карты (Калимдор слева, Восточные королевства справа)
 const REGIONS: RegionDef[] = [
-  { name: 'Лордерон', cx: 1430, cy: 360 },
-  { name: 'Каз Модан', cx: 1465, cy: 700 },
-  { name: 'Азерот', cx: 1420, cy: 1015 },
-  { name: 'Северный Калимдор', cx: 520, cy: 360 },
-  { name: 'Центральный Калимдор', cx: 520, cy: 710 },
-  { name: 'Южный Калимдор', cx: 545, cy: 1025 },
+  { name: 'Лордерон', cx: 0.8 * W, cy: 0.19 * H },
+  { name: 'Каз Модан', cx: 0.83 * W, cy: 0.46 * H },
+  { name: 'Азерот', cx: 0.84 * W, cy: 0.72 * H },
+  { name: 'Северный Калимдор', cx: 0.23 * W, cy: 0.17 * H },
+  { name: 'Центральный Калимдор', cx: 0.22 * W, cy: 0.47 * H },
+  { name: 'Южный Калимдор', cx: 0.24 * W, cy: 0.78 * H },
 ];
 const regionByName: Record<string, RegionDef> = Object.fromEntries(REGIONS.map((r) => [r.name, r]));
 const EK = new Set(['Лордерон', 'Каз Модан', 'Азерот']);
 
-const REGION_HALF_W = 235;
-const REGION_HALF_H = 175;
+const REGION_HALF_W = 720;
+const REGION_HALF_H = 640;
 function regionPoly(r: RegionDef): [number, number][] {
   const x0 = r.cx - REGION_HALF_W;
   const x1 = r.cx + REGION_HALF_W;
@@ -52,11 +53,11 @@ function regionPoly(r: RegionDef): [number, number][] {
 function autoPos(region: string, idx: number): { x: number; y: number } {
   const r = regionByName[region] ?? REGIONS[0];
   const cols = 4;
-  const stepX = 112;
-  const stepY = 92;
+  const stepX = 300;
+  const stepY = 300;
   const col = idx % cols;
   const row = Math.floor(idx / cols);
-  return { x: r.cx - 168 + col * stepX, y: r.cy - 120 + row * stepY };
+  return { x: r.cx - stepX * 1.5 + col * stepX, y: r.cy - stepY + row * stepY };
 }
 
 function zonePin(active: boolean): L.DivIcon {
@@ -127,21 +128,21 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
           <MapContainer
             crs={L.CRS.Simple}
             bounds={BOUNDS}
-            minZoom={-2}
-            maxZoom={2}
+            minZoom={-5}
+            maxZoom={1}
             zoomSnap={0.25}
             zoomControl={false}
             attributionControl={false}
             maxBounds={[
-              [-300, -300],
-              [H + 300, W + 300],
+              [-2000, -2000],
+              [H + 2000, W + 2000],
             ]}
             maxBoundsViscosity={0.7}
             className="leaflet-azeroth"
           >
             <FitBounds />
             <FlyTo target={flyTarget} />
-            <ImageOverlay url={assetUrl('images/map/azeroth-placeholder.svg')} bounds={BOUNDS} />
+            <ImageOverlay url={assetUrl('images/map/azeroth-map.webp')} bounds={BOUNDS} />
 
             {/* зоны-хотспоты регионов — подсветка при наведении */}
             {REGIONS.map((r) => (
@@ -189,6 +190,7 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
               </Marker>
             ))}
           </MapContainer>
+          <div className="map-attribution">Карта © Blizzard Entertainment</div>
 
           <div className="map-hint">
             {editMode
