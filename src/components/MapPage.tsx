@@ -142,7 +142,13 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
           >
             <FitBounds />
             <FlyTo target={flyTarget} />
+            <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} />
             <ImageOverlay url={assetUrl('images/map/azeroth-map.webp')} bounds={BOUNDS} />
+            <ImageOverlay
+              url={assetUrl('images/map/azeroth-overlay.webp')}
+              bounds={BOUNDS}
+              interactive={false}
+            />
 
             {/* зоны-хотспоты регионов — подсветка при наведении */}
             {REGIONS.map((r) => (
