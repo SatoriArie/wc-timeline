@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1400" viewBox="0 0 2000 1400">
+  <defs>
+    <radialGradient id="sea" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#1b2f4d"/>
+      <stop offset="60%" stop-color="#122440"/>
+      <stop offset="100%" stop-color="#0a1626"/>
+    </radialGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#46583f"/>
+      <stop offset="55%" stop-color="#374a30"/>
+      <stop offset="100%" stop-color="#283a24"/>
+    </linearGradient>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="26"/>
+    </filter>
+    <filter id="paper">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.06"/></feComponentTransfer>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <rect width="2000" height="1400" fill="url(#sea)"/>
+  <rect width="2000" height="1400" filter="url(#paper)" opacity="0.5"/>
+
+  <!-- parallels -->
+  <g stroke="#5cc8ff" stroke-opacity="0.05" stroke-width="2">
+    <line x1="0" y1="280" x2="2000" y2="280"/>
+    <line x1="0" y1="560" x2="2000" y2="560"/>
+    <line x1="0" y1="840" x2="2000" y2="840"/>
+    <line x1="0" y1="1120" x2="2000" y2="1120"/>
+    <line x1="500" y1="0" x2="500" y2="1400"/>
+    <line x1="1000" y1="0" x2="1000" y2="1400"/>
+    <line x1="1500" y1="0" x2="1500" y2="1400"/>
+  </g>
+
+  <!-- continents -->
+  <g transform="translate(0,100) scale(2)" filter="url(#rough)">
+    <path fill="url(#land)" stroke="#1d2c16" stroke-width="2"
+      d="M250 70 C 360 60 400 120 380 200 C 410 250 370 300 390 360 C 360 440 330 520 270 530 C 200 520 180 440 210 380 C 180 320 200 260 220 210 C 200 150 200 90 250 70 Z"/>
+    <path fill="url(#land)" stroke="#1d2c16" stroke-width="2"
+      d="M690 60 C 770 70 790 130 760 190 C 800 240 770 300 780 360 C 760 440 740 520 690 525 C 640 510 650 440 660 380 C 630 320 660 250 660 200 C 640 140 650 80 690 60 Z"/>
+  </g>
+
+  <!-- maelstrom -->
+  <g transform="translate(1000,700)" fill="none" stroke="#b58b4a" stroke-opacity="0.4" stroke-width="3">
+    <path d="M0 0 m -10 0 a 10 10 0 1 1 20 0 a 22 22 0 1 1 -44 0 a 34 34 0 1 1 68 0 a 46 46 0 1 1 -92 0"/>
+  </g>
+
+  <!-- compass -->
+  <g transform="translate(1000,190)" fill="#b58b4a" fill-opacity="0.5" stroke="#b58b4a" stroke-opacity="0.6" stroke-width="2">
+    <circle r="48" fill="none"/>
+    <path d="M0 -42 L10 0 L0 42 L-10 0 Z"/>
+    <path d="M-42 0 L0 -10 L42 0 L0 10 Z"/>
+    <text y="-58" text-anchor="middle" font-family="Georgia, serif" font-size="26" stroke="none" fill="#d8b46a">С</text>
+  </g>
+
+  <!-- continent labels -->
+  <g font-family="Georgia, serif" fill="#e8d6a8" fill-opacity="0.5" text-anchor="middle">
+    <text x="560" y="1230" font-size="46" letter-spacing="6">КАЛИМДОР</text>
+    <text x="1430" y="1230" font-size="46" letter-spacing="6">ВОСТОЧНЫЕ КОРОЛЕВСТВА</text>
+  </g>
+</svg>

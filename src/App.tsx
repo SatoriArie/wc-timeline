@@ -136,6 +136,12 @@ export default function App() {
     }
   };
 
+  const saveZoneCoords = (id: string, x: number, y: number) => {
+    const next = c.zones.map((z) => (z.id === id ? { ...z, mapX: x, mapY: y } : z));
+    c.setZones(next);
+    pushCloud('zones', next);
+  };
+
   const deleteEntity = (id: string) => {
     if (page === 'events') {
       const next = c.events.filter((x) => x.id !== id);
@@ -415,7 +421,7 @@ export default function App() {
             ))}
           </div>
           <div className="nav-right">
-            {isData && (
+            {(isData || page === 'map') && (
               <button
                 className={`icon-btn ${editMode ? 'active' : ''}`}
                 onClick={() => setEditMode((v) => !v)}
@@ -555,10 +561,9 @@ export default function App() {
         {c.status === 'ready' && page === 'map' && (
           <MapPage
             zones={c.zones}
-            onSelectRegion={(r) => {
-              setPendingRegion(r);
-              setPage('zones');
-            }}
+            editMode={editMode}
+            onZone={openForView.zones}
+            onPlaceZone={saveZoneCoords}
           />
         )}
         {page === 'cosmology' && <CosmologyPage />}

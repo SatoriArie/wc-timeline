@@ -85,6 +85,8 @@ function normZone(z: LegacyZone): Zone {
       text: c.text ?? '',
     })),
     images: arr(z.images),
+    ...(Number.isFinite(z.mapX) ? { mapX: z.mapX } : {}),
+    ...(Number.isFinite(z.mapY) ? { mapY: z.mapY } : {}),
   };
 }
 function normOrg(o: Partial<Organization>): Organization {
