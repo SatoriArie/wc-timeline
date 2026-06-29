@@ -811,11 +811,23 @@ a {
 
 /* ===== Карта (Leaflet) ===== */
 .map-layout { display: flex; gap: 20px; align-items: stretch; }
-.map-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+.map-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.map-canvas { position: relative; }
+/* виньетка-рамка: обрезается по области карты (как на classic+), не ездит с картой */
+.map-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  pointer-events: none;
+  border-radius: 16px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
 .map-attribution {
   position: absolute;
   right: 12px;
-  bottom: 46px;
+  bottom: 12px;
   z-index: 500;
   font-family: var(--font-body);
   font-size: 0.72rem;
@@ -827,8 +839,9 @@ a {
   pointer-events: none;
 }
 .leaflet-azeroth {
-  height: 74vh;
-  min-height: 480px;
+  width: 100%;
+  aspect-ratio: 10500 / 8416;
+  height: auto;
   border-radius: 16px;
   border: 1px solid rgba(255, 207, 87, 0.3);
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 0, 0, 0.4);
@@ -881,8 +894,7 @@ a {
 .map-aside {
   width: 320px;
   flex-shrink: 0;
-  height: 74vh;
-  min-height: 480px;
+  align-self: stretch;
   background: linear-gradient(160deg, rgba(22, 32, 54, 0.7), rgba(12, 20, 36, 0.7));
   border: 1px solid var(--panel-border);
   border-radius: 14px;
