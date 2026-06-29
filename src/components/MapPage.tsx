@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, ImageOverlay, Marker, Polygon, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Zone } from '../data/types';
+import type { MapPin, MapPinCategory, Zone } from '../data/types';
+import { PIN_CATEGORIES, pinCategoryMeta, curatedPins } from '../data';
 import { assetUrl } from '../utils/asset';
 
 interface Props {
@@ -19,7 +20,6 @@ const BOUNDS: L.LatLngBoundsExpression = [
   [0, 0],
   [H, W],
 ];
-// px(сверху-слева) → latLng для L.CRS.Simple (ось Y инвертирована)
 const at = (x: number, y: number): [number, number] => [H - y, x];
 
 interface RegionDef {
@@ -27,7 +27,6 @@ interface RegionDef {
   cx: number;
   cy: number;
 }
-// центры регионов — доли карты (Калимдор слева, Восточные королевства справа)
 const REGIONS: RegionDef[] = [
   { name: 'Лордерон', cx: 0.8 * W, cy: 0.19 * H },
   { name: 'Каз Модан', cx: 0.83 * W, cy: 0.46 * H },
@@ -37,73 +36,7 @@ const REGIONS: RegionDef[] = [
   { name: 'Южный Калимдор', cx: 0.24 * W, cy: 0.78 * H },
 ];
 const regionByName: Record<string, RegionDef> = Object.fromEntries(REGIONS.map((r) => [r.name, r]));
-const EK = new Set(['Лордерон', 'Каз Модан', 'Азерот']);
 
-// Точные позиции зон — доли карты [fx, fy] (по географии WoW на этой карте).
-// Имя должно точно совпадать с названием зоны. Перетаскивание в edit перекрывает это.
-const ZONE_COORDS: Record<string, [number, number]> = {
-  // --- Восточные королевства: Лордерон (север) ---
-  'Тирисфальские леса': [0.705, 0.205],
-  'Серебряный бор': [0.69, 0.265],
-  'Предгорья Хилсбрада': [0.715, 0.31],
-  'Альтеракские горы': [0.745, 0.285],
-  'Нагорье Арати': [0.78, 0.305],
-  'Внутренние земли': [0.8, 0.265],
-  'Западные Чумные земли': [0.75, 0.225],
-  'Восточные Чумные земли': [0.79, 0.205],
-  // --- Каз Модан (центр ВК) ---
-  Болотина: [0.72, 0.4],
-  'Тлеющие ушелье': [0.725, 0.46],
-  'Бесплодные Земли': [0.775, 0.475],
-  'Лох Модан': [0.755, 0.435],
-  'Дун Морог': [0.7, 0.475],
-  'Пылающие Степи': [0.74, 0.5],
-  // --- Азерот (юг ВК) ---
-  'Элвинский Лес': [0.715, 0.55],
-  'Западный край': [0.68, 0.575],
-  Красногорье: [0.755, 0.55],
-  'Сумеречный Лес': [0.715, 0.6],
-  'Перевал Мертвого Ветра': [0.75, 0.6],
-  'Болота Печали': [0.785, 0.595],
-  'Выжженные Степи': [0.795, 0.635],
-  'Тернистая Долина': [0.71, 0.685],
-  // --- Калимдор: север ---
-  Тельдрассил: [0.1, 0.075],
-  'Острова Лазурной Дымки (БК)': [0.04, 0.3],
-  'Оскверненный Лес': [0.155, 0.17],
-  'Лунная Поляна': [0.2, 0.155],
-  'Зимние Ключи': [0.245, 0.16],
-  'Темные Берега': [0.13, 0.2],
-  'Гора Хиджал': [0.19, 0.235],
-  'Ашенвальский Лес': [0.18, 0.255],
-  Азшара: [0.27, 0.275],
-  // --- Калимдор: центр ---
-  Дуротар: [0.255, 0.37],
-  'Когтистые Горы': [0.14, 0.42],
-  Степи: [0.21, 0.43],
-  Пустоши: [0.11, 0.485],
-  Мулгор: [0.16, 0.5],
-  'Пылевые Топи': [0.25, 0.52],
-  // --- Калимдор: юг ---
-  Фералас: [0.12, 0.605],
-  'Кратер Унгоро': [0.19, 0.66],
-  Силитус: [0.115, 0.705],
-  Танарис: [0.22, 0.725],
-  Ульдум: [0.17, 0.775],
-  'Ан’Кираж': [0.09, 0.775],
-};
-
-const REGION_HALF_W = 720;
-const REGION_HALF_H = 640;
-function regionPoly(r: RegionDef): [number, number][] {
-  const x0 = r.cx - REGION_HALF_W;
-  const x1 = r.cx + REGION_HALF_W;
-  const y0 = r.cy - REGION_HALF_H;
-  const y1 = r.cy + REGION_HALF_H;
-  return [at(x0, y0), at(x1, y0), at(x1, y1), at(x0, y1)];
-}
-
-// детерминированная авто-раскладка зон без координат — сетка внутри бокса региона
 function autoPos(region: string, idx: number): { x: number; y: number } {
   const r = regionByName[region] ?? REGIONS[0];
   const cols = 4;
@@ -114,7 +47,7 @@ function autoPos(region: string, idx: number): { x: number; y: number } {
   return { x: r.cx - stepX * 1.5 + col * stepX, y: r.cy - stepY + row * stepY };
 }
 
-function zonePin(active: boolean): L.DivIcon {
+function zonePinIcon(active: boolean): L.DivIcon {
   return L.divIcon({
     className: 'map-pin-wrap',
     html: `<span class="map-zone-pin${active ? ' active' : ''}"></span>`,
@@ -122,8 +55,16 @@ function zonePin(active: boolean): L.DivIcon {
     iconAnchor: [12, 12],
   });
 }
+function catPinIcon(cat: MapPinCategory, active: boolean): L.DivIcon {
+  const m = pinCategoryMeta(cat);
+  return L.divIcon({
+    className: 'map-pin-wrap',
+    html: `<span class="map-cat-pin${active ? ' active' : ''}" style="--pc:${m.color}">${m.glyph}</span>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
 
-/** Вписать карту в границы при первом показе. */
 function FitBounds() {
   const map = useMap();
   useEffect(() => {
@@ -131,8 +72,6 @@ function FitBounds() {
   }, [map]);
   return null;
 }
-
-/** Плавно перелететь к выбранной точке. */
 function FlyTo({ target }: { target: { x: number; y: number; k: number } | null }) {
   const map = useMap();
   useEffect(() => {
@@ -141,138 +80,280 @@ function FlyTo({ target }: { target: { x: number; y: number; k: number } | null 
   return null;
 }
 
+type SortMode = 'trending' | 'name' | 'pins';
+
+/** Русское склонение слова «точка». */
+function pts(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return `${n} точка`;
+  if (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) return `${n} точки`;
+  return `${n} точек`;
+}
+
 export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props) {
   const [query, setQuery] = useState('');
   const [hoverRegion, setHoverRegion] = useState<string | null>(null);
-  const [hoverZone, setHoverZone] = useState<string | null>(null);
+  const [hoverPin, setHoverPin] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; k: number } | null>(null);
+  const [enabled, setEnabled] = useState<Set<MapPinCategory>>(
+    () => new Set(PIN_CATEGORIES.map((c) => c.id)),
+  );
+  const [minScore, setMinScore] = useState(0);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [sort, setSort] = useState<SortMode>('trending');
 
-  // координаты пинов: из данных или авто-раскладка
-  const placed = useMemo(() => {
+  const zoneByName = useMemo(() => {
+    const m = new Map<string, Zone>();
+    for (const z of zones) m.set(z.name, z);
+    return m;
+  }, [zones]);
+
+  // координаты зон (из данных или авто-раскладка)
+  const zoneCoord = useMemo(() => {
     const idxByRegion: Record<string, number> = {};
-    return zones.map((z) => {
+    const m = new Map<string, { x: number; y: number }>();
+    for (const z of zones) {
       let x = z.mapX;
       let y = z.mapY;
       if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        const coord = ZONE_COORDS[z.name];
-        if (coord) {
-          x = coord[0] * W;
-          y = coord[1] * H;
-        } else {
-          const i = idxByRegion[z.region] ?? 0;
-          idxByRegion[z.region] = i + 1;
-          const p = autoPos(z.region, i);
-          x = p.x;
-          y = p.y;
-        }
+        const i = idxByRegion[z.region] ?? 0;
+        idxByRegion[z.region] = i + 1;
+        const p = autoPos(z.region, i);
+        x = p.x;
+        y = p.y;
       }
-      return { zone: z, x: x as number, y: y as number };
-    });
+      m.set(z.name, { x: x as number, y: y as number });
+    }
+    return m;
   }, [zones]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return placed;
-    return placed.filter(
-      (p) => p.zone.name.toLowerCase().includes(q) || p.zone.region.toLowerCase().includes(q),
-    );
-  }, [placed, query]);
+  // все точки: зоны (category 'zone') + кураторские пины, привязанные к зонам
+  const allPins = useMemo(() => {
+    const out: { pin: MapPin; x: number; y: number }[] = [];
+    for (const z of zones) {
+      const c = zoneCoord.get(z.name);
+      if (!c) continue;
+      out.push({
+        pin: { id: `zone-${z.id}`, title: z.name, category: 'zone', zone: z.name, score: 50 },
+        x: c.x,
+        y: c.y,
+      });
+    }
+    // смещения для нескольких пинов в одной зоне
+    const perZone: Record<string, number> = {};
+    for (const p of curatedPins) {
+      let x = p.x;
+      let y = p.y;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const c = zoneCoord.get(p.zone);
+        if (!c) continue; // зоны нет в данных — пропускаем
+        const i = perZone[p.zone] ?? 0;
+        perZone[p.zone] = i + 1;
+        const ang = (i * 2.4) % (Math.PI * 2);
+        x = c.x + Math.cos(ang) * (140 + i * 30);
+        y = c.y + Math.sin(ang) * (140 + i * 30) + 120;
+      }
+      out.push({ pin: p, x: x as number, y: y as number });
+    }
+    return out;
+  }, [zones, zoneCoord]);
 
-  const ekCount = zones.filter((z) => EK.has(z.region)).length;
-  const kalimdorCount = zones.length - ekCount;
+  const maxScore = useMemo(() => Math.max(1, ...allPins.map((p) => p.pin.score)), [allPins]);
+
+  // видимые точки после фильтров
+  const visiblePins = useMemo(
+    () => allPins.filter((p) => enabled.has(p.pin.category) && p.pin.score >= minScore),
+    [allPins, enabled, minScore],
+  );
+
+  // счётчик точек по зонам
+  const pinsPerZone = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of allPins) m[p.pin.zone] = (m[p.pin.zone] ?? 0) + 1;
+    return m;
+  }, [allPins]);
+
+  // список зон в сайдбаре (поиск + сортировка)
+  const zoneList = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = zones.filter(
+      (z) => !q || z.name.toLowerCase().includes(q) || z.region.toLowerCase().includes(q),
+    );
+    if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'pins')
+      list = [...list].sort((a, b) => (pinsPerZone[b.name] ?? 0) - (pinsPerZone[a.name] ?? 0));
+    return list;
+  }, [zones, query, sort, pinsPerZone]);
+
+  const toggleCat = (id: MapPinCategory) =>
+    setEnabled((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const selectAll = () => setEnabled(new Set(PIN_CATEGORIES.map((c) => c.id)));
+  const resetFilters = () => {
+    selectAll();
+    setMinScore(0);
+  };
+
+  const openPinZone = (zoneName: string) => {
+    const z = zoneByName.get(zoneName);
+    if (z) onZone(z);
+  };
 
   return (
     <div className="mapview">
       <div className="map-layout">
         <div className="map-stage">
           <div className="map-canvas">
-          <MapContainer
-            crs={L.CRS.Simple}
-            bounds={BOUNDS}
-            minZoom={-5}
-            maxZoom={1}
-            zoomSnap={0.25}
-            zoomControl={false}
-            attributionControl={false}
-            maxBounds={[
-              [-2000, -2000],
-              [H + 2000, W + 2000],
-            ]}
-            maxBoundsViscosity={0.7}
-            className="leaflet-azeroth"
-          >
-            <FitBounds />
-            <FlyTo target={flyTarget} />
-            {/* как на classic+: фон → overlay(сетка/водоворот/виньетка) → карта; все зумятся с картой */}
-            <ImageOverlay
-              url={assetUrl('images/map/azeroth-bg.webp')}
+            <MapContainer
+              crs={L.CRS.Simple}
               bounds={BOUNDS}
-              interactive={false}
-            />
-            <ImageOverlay
-              url={assetUrl('images/map/azeroth-overlay.webp')}
-              bounds={BOUNDS}
-              interactive={false}
-            />
-            <ImageOverlay
-              url={assetUrl('images/map/azeroth-map.webp')}
-              bounds={BOUNDS}
-              interactive={false}
-            />
+              minZoom={-5}
+              maxZoom={1}
+              zoomSnap={0.25}
+              zoomControl={false}
+              attributionControl={false}
+              maxBounds={[
+                [-2000, -2000],
+                [H + 2000, W + 2000],
+              ]}
+              maxBoundsViscosity={0.7}
+              className="leaflet-azeroth"
+            >
+              <FitBounds />
+              <FlyTo target={flyTarget} />
+              <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} interactive={false} />
+              <ImageOverlay url={assetUrl('images/map/azeroth-overlay.webp')} bounds={BOUNDS} interactive={false} />
+              <ImageOverlay url={assetUrl('images/map/azeroth-map.webp')} bounds={BOUNDS} interactive={false} />
 
-            {/* зоны-хотспоты регионов — подсветка при наведении */}
-            {REGIONS.map((r) => (
-              <Polygon
-                key={r.name}
-                positions={regionPoly(r)}
-                pathOptions={{
-                  color: '#d8b46a',
-                  weight: hoverRegion === r.name ? 2 : 1,
-                  opacity: hoverRegion === r.name ? 0.6 : 0.18,
-                  fillColor: '#d8b46a',
-                  fillOpacity: hoverRegion === r.name ? 0.16 : 0.03,
-                }}
-                eventHandlers={{
-                  mouseover: () => setHoverRegion(r.name),
-                  mouseout: () => setHoverRegion(null),
-                }}
-              >
-                <Tooltip direction="center" className="map-region-tip" sticky>
-                  {r.name}
-                </Tooltip>
-              </Polygon>
-            ))}
+              {/* регионы-хотспоты */}
+              {REGIONS.map((r) => {
+                const half = 720;
+                const halfH = 640;
+                return (
+                  <Polygon
+                    key={r.name}
+                    positions={[
+                      at(r.cx - half, r.cy - halfH),
+                      at(r.cx + half, r.cy - halfH),
+                      at(r.cx + half, r.cy + halfH),
+                      at(r.cx - half, r.cy + halfH),
+                    ]}
+                    pathOptions={{
+                      color: '#d8b46a',
+                      weight: hoverRegion === r.name ? 2 : 1,
+                      opacity: hoverRegion === r.name ? 0.5 : 0.12,
+                      fillColor: '#d8b46a',
+                      fillOpacity: hoverRegion === r.name ? 0.1 : 0.02,
+                    }}
+                    eventHandlers={{
+                      mouseover: () => setHoverRegion(r.name),
+                      mouseout: () => setHoverRegion(null),
+                    }}
+                  >
+                    <Tooltip direction="center" className="map-region-tip" sticky>
+                      {r.name}
+                    </Tooltip>
+                  </Polygon>
+                );
+              })}
 
-            {/* пины зон */}
-            {placed.map((p) => (
-              <Marker
-                key={p.zone.id}
-                position={at(p.x, p.y)}
-                icon={zonePin(hoverZone === p.zone.id)}
-                draggable={editMode}
-                eventHandlers={{
-                  click: () => onZone(p.zone),
-                  mouseover: () => setHoverZone(p.zone.id),
-                  mouseout: () => setHoverZone(null),
-                  dragend: (e) => {
-                    const ll = (e.target as L.Marker).getLatLng();
-                    onPlaceZone(p.zone.id, Math.round(ll.lng), Math.round(H - ll.lat));
-                  },
-                }}
+              {/* точки */}
+              {visiblePins.map(({ pin, x, y }) => {
+                const isZone = pin.category === 'zone';
+                const draggable = editMode && isZone;
+                return (
+                  <Marker
+                    key={pin.id}
+                    position={at(x, y)}
+                    icon={
+                      isZone
+                        ? zonePinIcon(hoverPin === pin.id)
+                        : catPinIcon(pin.category, hoverPin === pin.id)
+                    }
+                    draggable={draggable}
+                    eventHandlers={{
+                      click: () => openPinZone(pin.zone),
+                      mouseover: () => setHoverPin(pin.id),
+                      mouseout: () => setHoverPin(null),
+                      dragend: (e) => {
+                        if (!isZone) return;
+                        const ll = (e.target as L.Marker).getLatLng();
+                        const zid = pin.id.replace(/^zone-/, '');
+                        onPlaceZone(zid, Math.round(ll.lng), Math.round(H - ll.lat));
+                      },
+                    }}
+                  >
+                    <Tooltip direction="top" offset={[0, -12]} className="map-zone-tip">
+                      {pin.title}
+                      {!isZone && <span className="map-tip-cat"> · {pinCategoryMeta(pin.category).label}</span>}
+                    </Tooltip>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+
+            {/* левая панель фильтров */}
+            <div className={`map-filters ${panelOpen ? 'open' : 'collapsed'}`}>
+              <button
+                className="map-filters-toggle"
+                onClick={() => setPanelOpen((v) => !v)}
+                title={panelOpen ? 'Свернуть' : 'Фильтры'}
               >
-                <Tooltip direction="top" offset={[0, -12]} className="map-zone-tip">
-                  {p.zone.name}
-                </Tooltip>
-              </Marker>
-            ))}
-          </MapContainer>
+                {panelOpen ? '‹' : '›'}
+              </button>
+              {panelOpen && (
+                <div className="map-filters-body">
+                  <div className="map-filters-head">
+                    <span>Категории</span>
+                    <button className="map-mini-btn" onClick={selectAll}>
+                      Все
+                    </button>
+                  </div>
+                  <div className="map-cat-list">
+                    {PIN_CATEGORIES.map((c) => (
+                      <label key={c.id} className="map-cat-row">
+                        <input
+                          type="checkbox"
+                          checked={enabled.has(c.id)}
+                          onChange={() => toggleCat(c.id)}
+                        />
+                        <span className="map-cat-ico" style={{ background: c.color }}>
+                          {c.glyph}
+                        </span>
+                        <span className="map-cat-label">{c.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="map-slider-row">
+                    <span>Популярность ≥ {minScore}</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxScore}
+                      value={minScore}
+                      onChange={(e) => setMinScore(Number(e.target.value))}
+                    />
+                  </div>
+                  <button className="map-reset-btn" onClick={resetFilters}>
+                    Сбросить фильтры
+                  </button>
+                  <div className="map-showing">Показано: {pts(visiblePins.length)}</div>
+                </div>
+              )}
+            </div>
+
             <div className="map-attribution">Карта © Blizzard Entertainment</div>
           </div>
 
           <div className="map-hint">
             {editMode
-              ? 'Режим редактирования: перетащи пин, чтобы разместить зону на карте.'
-              : 'Колесо — зум, перетаскивание — двигать карту. Клик по пину — открыть зону.'}
+              ? 'Режим редактирования: перетащи пин зоны, чтобы разместить её на карте.'
+              : 'Колесо — зум, перетаскивание — двигать карту. Клик по точке — открыть зону.'}
           </div>
         </div>
 
@@ -281,48 +362,67 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone }: Props)
           <h1 className="map-aside-title">Карта Азерота</h1>
           <div className="map-stats">
             <div className="map-stat">
+              <b>{allPins.length}</b>
+              <span>точек</span>
+            </div>
+            <div className="map-stat">
+              <b>{visiblePins.length}</b>
+              <span>показано</span>
+            </div>
+            <div className="map-stat">
               <b>{zones.length}</b>
               <span>зон</span>
             </div>
-            <div className="map-stat">
-              <b>{ekCount}</b>
-              <span>В. Королевства</span>
-            </div>
-            <div className="map-stat">
-              <b>{kalimdorCount}</b>
-              <span>Калимдор</span>
-            </div>
           </div>
 
-          <input
-            className="map-search"
-            placeholder="Поиск зоны…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="map-search-row">
+            <input
+              className="map-search"
+              placeholder="Поиск зоны…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select
+              className="map-sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              title="Сортировка"
+            >
+              <option value="trending">По умолчанию</option>
+              <option value="pins">По числу точек</option>
+              <option value="name">По алфавиту</option>
+            </select>
+          </div>
 
           <div className="map-zone-list">
-            {filtered.length === 0 && <p className="modal-meta">Ничего не найдено.</p>}
-            {filtered.map((p) => {
-              const thumb = p.zone.images[0];
+            {zoneList.length === 0 && <p className="modal-meta">Ничего не найдено.</p>}
+            {zoneList.map((z) => {
+              const thumb = z.images[0];
+              const c = zoneCoord.get(z.name);
+              const cnt = pinsPerZone[z.name] ?? 0;
               return (
                 <button
-                  key={p.zone.id}
+                  key={z.id}
                   className="map-zone-card"
                   style={
                     thumb
-                      ? { backgroundImage: `linear-gradient(90deg, rgba(20,14,8,.82), rgba(20,14,8,.45)), url(${assetUrl(thumb)})` }
+                      ? {
+                          backgroundImage: `linear-gradient(90deg, rgba(20,14,8,.82), rgba(20,14,8,.45)), url(${assetUrl(thumb)})`,
+                        }
                       : undefined
                   }
-                  onMouseEnter={() => setHoverZone(p.zone.id)}
-                  onMouseLeave={() => setHoverZone(null)}
+                  onMouseEnter={() => setHoverPin(`zone-${z.id}`)}
+                  onMouseLeave={() => setHoverPin(null)}
                   onClick={() => {
-                    setFlyTarget({ x: p.x, y: p.y, k: Date.now() });
-                    onZone(p.zone);
+                    if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
+                    onZone(z);
                   }}
                 >
-                  <span className="map-zone-card-name">{p.zone.name}</span>
-                  <span className="map-zone-card-region">{p.zone.region}</span>
+                  <span className="map-zone-card-name">{z.name}</span>
+                  <span className="map-zone-card-region">
+                    {z.region}
+                    {cnt > 1 && <span className="map-zone-card-pins"> · {pts(cnt)}</span>}
+                  </span>
                 </button>
               );
             })}

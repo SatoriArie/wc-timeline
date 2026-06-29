@@ -93,6 +93,32 @@ export interface Zone {
   mapY?: number;
 }
 
+/** Категория точки на карте (как на classic+). */
+export type MapPinCategory =
+  | 'zone'
+  | 'dungeon'
+  | 'raid'
+  | 'world_boss'
+  | 'flight_path'
+  | 'quest'
+  | 'pvp'
+  | 'lore'
+  | 'world_event';
+
+/** Точка-пин на карте. */
+export interface MapPin {
+  id: string;
+  title: string;
+  category: MapPinCategory;
+  /** Имя зоны-якоря (координата берётся от зоны, если нет явных x/y) */
+  zone: string;
+  /** Популярность — для слайдера и сортировки */
+  score: number;
+  /** Явные координаты (px карты); если нет — координата зоны + смещение */
+  x?: number;
+  y?: number;
+}
+
 /** Фракция / орден / организация (редактируемая сущность). */
 export interface Organization {
   id: string;
