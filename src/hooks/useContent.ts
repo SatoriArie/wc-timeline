@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Character, Organization, TimelineEvent, Zone } from '../data/types';
+import type { Character, MapPin, Organization, TimelineEvent, Zone } from '../data/types';
 import { fetchContent, isCloud, supabase, type Content } from '../data';
 
 const LS_KEY = 'wc-timeline-draft-v2';
@@ -9,6 +9,7 @@ interface Draft {
   characters?: Character[];
   zones?: Zone[];
   organizations?: Organization[];
+  pins?: MapPin[];
 }
 
 function loadDraft(): Draft {
@@ -33,6 +34,7 @@ export function useContent() {
   const [characters, setCharactersRaw] = useState<Character[]>([]);
   const [zones, setZonesRaw] = useState<Zone[]>([]);
   const [organizations, setOrganizationsRaw] = useState<Organization[]>([]);
+  const [pins, setPinsRaw] = useState<MapPin[]>([]);
 
   const repo = useRef<Content | null>(null);
   const loaded = useRef(false);
@@ -51,6 +53,7 @@ export function useContent() {
         setCharactersRaw(draft.characters ?? content.characters);
         setZonesRaw(draft.zones ?? content.zones);
         setOrganizationsRaw(draft.organizations ?? content.organizations);
+        setPinsRaw(draft.pins ?? content.pins);
         loaded.current = true;
         setStatus('ready');
       })
@@ -78,6 +81,7 @@ export function useContent() {
             setCharactersRaw(content.characters);
             setZonesRaw(content.zones);
             setOrganizationsRaw(content.organizations);
+            setPinsRaw(content.pins);
             setSyncCount((n) => n + 1);
           })
           .catch(() => {});
@@ -92,11 +96,11 @@ export function useContent() {
   useEffect(() => {
     if (isCloud || !loaded.current || !dirty.current) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones, organizations }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ events, characters, zones, organizations, pins }));
     } catch {
       /* квота/приватный режим — игнорируем */
     }
-  }, [events, characters, zones, organizations]);
+  }, [events, characters, zones, organizations, pins]);
 
   const setEvents = useCallback((u: React.SetStateAction<TimelineEvent[]>) => {
     dirty.current = true;
@@ -114,6 +118,10 @@ export function useContent() {
     dirty.current = true;
     setOrganizationsRaw(u);
   }, []);
+  const setPins = useCallback((u: React.SetStateAction<MapPin[]>) => {
+    dirty.current = true;
+    setPinsRaw(u);
+  }, []);
 
   const resetToRepo = useCallback(() => {
     try {
@@ -127,6 +135,7 @@ export function useContent() {
       setCharactersRaw(repo.current.characters);
       setZonesRaw(repo.current.zones);
       setOrganizationsRaw(repo.current.organizations);
+      setPinsRaw(repo.current.pins);
     }
   }, []);
 
@@ -146,10 +155,12 @@ export function useContent() {
     characters,
     zones,
     organizations,
+    pins,
     setEvents,
     setCharacters,
     setZones,
     setOrganizations,
+    setPins,
     resetToRepo,
     hasDraft,
     syncCount,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Character, Organization, PageId, TimelineEvent, Zone } from './data/types';
+import type { Character, MapPin, Organization, PageId, TimelineEvent, Zone } from './data/types';
 import { downloadJson, readJsonFile, useContent } from './hooks/useContent';
 import { useAuth } from './hooks/useAuth';
 import { isCloud, fetchRepo, saveDataset, seedCloud, type DatasetId } from './data';
@@ -148,6 +148,17 @@ export default function App() {
     pushCloud('zones', next);
   };
 
+  const savePin = (pin: MapPin) => {
+    const next = upsert(c.pins, pin);
+    c.setPins(next);
+    pushCloud('pins', next);
+  };
+  const deletePin = (id: string) => {
+    const next = c.pins.filter((p) => p.id !== id);
+    c.setPins(next);
+    pushCloud('pins', next);
+  };
+
   const deleteEntity = (id: string) => {
     if (page === 'events') {
       const next = c.events.filter((x) => x.id !== id);
@@ -175,6 +186,7 @@ export default function App() {
         characters: c.characters,
         zones: c.zones,
         organizations: c.organizations,
+        pins: c.pins,
       });
       setAuthMsg('Текущие данные залиты в облако ✓');
     } catch (e) {
@@ -191,6 +203,7 @@ export default function App() {
       c.setCharacters(fresh.characters);
       c.setZones(fresh.zones);
       c.setOrganizations(fresh.organizations);
+      c.setPins(fresh.pins);
       setAuthMsg('Облако обновлено из репозитория ✓');
     } catch (e) {
       setAuthMsg('Ошибка синхронизации: ' + (e as Error).message);
@@ -567,10 +580,13 @@ export default function App() {
         {c.status === 'ready' && page === 'map' && (
           <MapPage
             zones={c.zones}
+            pins={c.pins}
             editMode={editMode}
             onZone={openForView.zones}
             onPlaceZone={saveZoneCoords}
             onSavePoly={saveZonePoly}
+            onSavePin={savePin}
+            onDeletePin={deletePin}
           />
         )}
         {page === 'cosmology' && <CosmologyPage />}

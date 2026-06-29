@@ -1136,6 +1136,55 @@ a {
 .map-trace-btn:hover { background: rgba(255, 207, 87, 0.22); border-color: var(--titan-gold); }
 .map-zone-card-poly { color: #8fe08f; }
 
+/* кнопка добавления точки */
+.map-add-pin {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 500;
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  color: #2a1a08;
+  background: linear-gradient(160deg, #f4c965, #d49a3a);
+  border: 1px solid #b87f2c;
+  border-radius: 9px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(180, 127, 44, 0.4);
+}
+.map-add-pin:hover { filter: brightness(1.08); }
+
+/* редактор точки */
+.pin-editor-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 700;
+  background: rgba(4, 7, 13, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+}
+.pin-editor {
+  width: min(340px, 86%);
+  background: linear-gradient(160deg, #fbf6e9, #e8d8bd);
+  border: 2px solid var(--titan-gold);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pin-editor h3 {
+  margin: 0;
+  font-family: var(--font-head);
+  color: #3a2412;
+  font-size: 1.2rem;
+}
+.pin-editor-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pin-editor-actions .form-btn { padding: 9px 16px; font-size: 0.9rem; }
+
 /* поиск + сортировка */
 .map-search-row { display: flex; gap: 8px; }
 .map-search-row .map-search { flex: 1; }

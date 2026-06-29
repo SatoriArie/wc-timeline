@@ -1,0 +1,254 @@
+[
+  {
+    "id": "pin-flight-path-штормград",
+    "title": "Штормград",
+    "category": "flight_path",
+    "zone": "Элвинский Лес",
+    "score": 95,
+    "x": 8810,
+    "y": 5880
+  },
+  {
+    "id": "pin-flight-path-стальгорн",
+    "title": "Стальгорн",
+    "category": "flight_path",
+    "zone": "Дун Морог",
+    "score": 82,
+    "x": 9005,
+    "y": 3691
+  },
+  {
+    "id": "pin-flight-path-подгород",
+    "title": "Подгород",
+    "category": "flight_path",
+    "zone": "Тирисфальские леса",
+    "score": 80,
+    "x": 8090,
+    "y": 1419
+  },
+  {
+    "id": "pin-flight-path-оргриммар",
+    "title": "Оргриммар",
+    "category": "flight_path",
+    "zone": "Дуротар",
+    "score": 92,
+    "x": 2600,
+    "y": 3776
+  },
+  {
+    "id": "pin-flight-path-громовой-ут-с",
+    "title": "Громовой Утёс",
+    "category": "flight_path",
+    "zone": "Мулгор",
+    "score": 70,
+    "x": 2000,
+    "y": 4076
+  },
+  {
+    "id": "pin-flight-path-дарнас",
+    "title": "Дарнас",
+    "category": "flight_path",
+    "zone": "Тельдрассил",
+    "score": 72,
+    "x": 2405,
+    "y": 1251
+  },
+  {
+    "id": "pin-dungeon-м-ртвые-копи",
+    "title": "Мёртвые копи",
+    "category": "dungeon",
+    "zone": "Западный край",
+    "score": 75,
+    "x": 9110,
+    "y": 5880
+  },
+  {
+    "id": "pin-dungeon-монастырь-алого-ордена",
+    "title": "Монастырь Алого ордена",
+    "category": "dungeon",
+    "zone": "Тирисфальские леса",
+    "score": 84,
+    "x": 7825,
+    "y": 1534
+  },
+  {
+    "id": "pin-dungeon-гномреган",
+    "title": "Гномреган",
+    "category": "dungeon",
+    "zone": "Дун Морог",
+    "score": 60,
+    "x": 8740,
+    "y": 3806
+  },
+  {
+    "id": "pin-dungeon-ульдаман",
+    "title": "Ульдаман",
+    "category": "dungeon",
+    "zone": "Бесплодные Земли",
+    "score": 55,
+    "x": 9305,
+    "y": 3691
+  },
+  {
+    "id": "pin-dungeon-зул-фаррак",
+    "title": "Зул’Фаррак",
+    "category": "dungeon",
+    "zone": "Танарис",
+    "score": 58,
+    "x": 2510,
+    "y": 6684
+  },
+  {
+    "id": "pin-dungeon-мараудон",
+    "title": "Мараудон",
+    "category": "dungeon",
+    "zone": "Пустоши",
+    "score": 50,
+    "x": 2900,
+    "y": 3776
+  },
+  {
+    "id": "pin-dungeon-пещеры-стенаний",
+    "title": "Пещеры Стенаний",
+    "category": "dungeon",
+    "zone": "Степи",
+    "score": 52,
+    "x": 2300,
+    "y": 3776
+  },
+  {
+    "id": "pin-raid-огненные-недра",
+    "title": "Огненные Недра",
+    "category": "raid",
+    "zone": "Пылающие Степи",
+    "score": 90,
+    "x": 8705,
+    "y": 3991
+  },
+  {
+    "id": "pin-raid-логово-крыла-тьмы",
+    "title": "Логово Крыла Тьмы",
+    "category": "raid",
+    "zone": "Пылающие Степи",
+    "score": 76,
+    "x": 8440,
+    "y": 4106
+  },
+  {
+    "id": "pin-raid-логово-ониксии",
+    "title": "Логово Ониксии",
+    "category": "raid",
+    "zone": "Пылевые Топи",
+    "score": 74,
+    "x": 2300,
+    "y": 4076
+  },
+  {
+    "id": "pin-raid-храм-ан-кираж",
+    "title": "Храм Ан’Кираж",
+    "category": "raid",
+    "zone": "Ан’Кираж",
+    "score": 85,
+    "x": 3110,
+    "y": 6384
+  },
+  {
+    "id": "pin-raid-руины-ан-кираж",
+    "title": "Руины Ан’Кираж",
+    "category": "raid",
+    "zone": "Силитус",
+    "score": 60,
+    "x": 2510,
+    "y": 6384
+  },
+  {
+    "id": "pin-world-boss-лорд-каззак",
+    "title": "Лорд Каззак",
+    "category": "world_boss",
+    "zone": "Выжженные Степи",
+    "score": 66,
+    "x": 8810,
+    "y": 6180
+  },
+  {
+    "id": "pin-world-boss-азурегос",
+    "title": "Азурегос",
+    "category": "world_boss",
+    "zone": "Азшара",
+    "score": 57,
+    "x": 2105,
+    "y": 1851
+  },
+  {
+    "id": "pin-pvp-альтеракская-долина",
+    "title": "Альтеракская долина",
+    "category": "pvp",
+    "zone": "Альтеракские горы",
+    "score": 71,
+    "x": 8990,
+    "y": 1419
+  },
+  {
+    "id": "pin-pvp-ущелье-песни-войны",
+    "title": "Ущелье Песни Войны",
+    "category": "pvp",
+    "zone": "Ашенвальский Лес",
+    "score": 63,
+    "x": 3005,
+    "y": 1551
+  },
+  {
+    "id": "pin-pvp-низина-арати",
+    "title": "Низина Арати",
+    "category": "pvp",
+    "zone": "Нагорье Арати",
+    "score": 66,
+    "x": 8090,
+    "y": 1719
+  },
+  {
+    "id": "pin-world-event-врата-гнева",
+    "title": "Врата гнева",
+    "category": "world_event",
+    "zone": "Силитус",
+    "score": 68,
+    "x": 2245,
+    "y": 6499
+  },
+  {
+    "id": "pin-lore-каражан",
+    "title": "Каражан",
+    "category": "lore",
+    "zone": "Перевал Мертвого Ветра",
+    "score": 64,
+    "x": 9110,
+    "y": 6180
+  },
+  {
+    "id": "pin-lore-лунная-поляна",
+    "title": "Лунная поляна",
+    "category": "lore",
+    "zone": "Лунная Поляна",
+    "score": 46,
+    "x": 2105,
+    "y": 1551
+  },
+  {
+    "id": "pin-quest-тайна-кратера-унгоро",
+    "title": "Тайна кратера Унгоро",
+    "category": "quest",
+    "zone": "Кратер Унгоро",
+    "score": 42,
+    "x": 2810,
+    "y": 6384
+  },
+  {
+    "id": "pin-quest-проклятие-сумеречного-леса",
+    "title": "Проклятие Сумеречного леса",
+    "category": "quest",
+    "zone": "Сумеречный Лес",
+    "score": 40,
+    "x": 9410,
+    "y": 5880
+  }
+]

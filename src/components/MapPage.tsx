@@ -12,15 +12,18 @@ import {
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MapPin, MapPinCategory, Zone } from '../data/types';
-import { PIN_CATEGORIES, pinCategoryMeta, curatedPins } from '../data';
+import { PIN_CATEGORIES, pinCategoryMeta } from '../data';
 import { assetUrl } from '../utils/asset';
 
 interface Props {
   zones: Zone[];
+  pins: MapPin[];
   editMode: boolean;
   onZone: (z: Zone) => void;
   onPlaceZone: (id: string, x: number, y: number) => void;
   onSavePoly: (id: string, poly: [number, number][]) => void;
+  onSavePin: (pin: MapPin) => void;
+  onDeletePin: (id: string) => void;
 }
 
 // Система координат карты-подложки (px, верхний-левый угол) = размеры картинки.
@@ -118,7 +121,16 @@ function pts(n: number): string {
   return `${n} точек`;
 }
 
-export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePoly }: Props) {
+export default function MapPage({
+  zones,
+  pins,
+  editMode,
+  onZone,
+  onPlaceZone,
+  onSavePoly,
+  onSavePin,
+  onDeletePin,
+}: Props) {
   const [query, setQuery] = useState('');
   const [hoverRegion, setHoverRegion] = useState<string | null>(null);
   const [hoverPin, setHoverPin] = useState<string | null>(null);
@@ -127,6 +139,8 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
   // обводка зоны
   const [drawId, setDrawId] = useState<string | null>(null);
   const [drawPts, setDrawPts] = useState<[number, number][]>([]);
+  // редактирование точки
+  const [editPin, setEditPin] = useState<MapPin | null>(null);
   const [enabled, setEnabled] = useState<Set<MapPinCategory>>(
     () => new Set(PIN_CATEGORIES.map((c) => c.id)),
   );
@@ -159,9 +173,9 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
     return m;
   }, [zones]);
 
-  // все точки: зоны (category 'zone') + кураторские пины, привязанные к зонам
+  // все точки: зоны (category 'zone', координата из зоны) + редактируемые пины (датасет)
   const allPins = useMemo(() => {
-    const out: { pin: MapPin; x: number; y: number }[] = [];
+    const out: { pin: MapPin; x: number; y: number; isZone: boolean; zoneId?: string }[] = [];
     for (const z of zones) {
       const c = zoneCoord.get(z.name);
       if (!c) continue;
@@ -169,26 +183,15 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
         pin: { id: `zone-${z.id}`, title: z.name, category: 'zone', zone: z.name, score: 50 },
         x: c.x,
         y: c.y,
+        isZone: true,
+        zoneId: z.id,
       });
     }
-    // смещения для нескольких пинов в одной зоне
-    const perZone: Record<string, number> = {};
-    for (const p of curatedPins) {
-      let x = p.x;
-      let y = p.y;
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        const c = zoneCoord.get(p.zone);
-        if (!c) continue; // зоны нет в данных — пропускаем
-        const i = perZone[p.zone] ?? 0;
-        perZone[p.zone] = i + 1;
-        const ang = (i * 2.4) % (Math.PI * 2);
-        x = c.x + Math.cos(ang) * (140 + i * 30);
-        y = c.y + Math.sin(ang) * (140 + i * 30) + 120;
-      }
-      out.push({ pin: p, x: x as number, y: y as number });
+    for (const p of pins) {
+      out.push({ pin: p, x: p.x ?? 0, y: p.y ?? 0, isZone: false });
     }
     return out;
-  }, [zones, zoneCoord]);
+  }, [zones, zoneCoord, pins]);
 
   const maxScore = useMemo(() => Math.max(1, ...allPins.map((p) => p.pin.score)), [allPins]);
 
@@ -255,6 +258,21 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
     setDrawPts([]);
   };
   const drawingZone = drawId ? zones.find((z) => z.id === drawId) : null;
+
+  const addPin = () => {
+    const p: MapPin = {
+      id: `pin-${Date.now().toString(36)}`,
+      title: 'Новая точка',
+      category: 'lore',
+      zone: '',
+      score: 50,
+      x: Math.round(W / 2),
+      y: Math.round(H / 2),
+    };
+    onSavePin(p);
+    setEditPin(p);
+    setFlyTarget({ x: p.x as number, y: p.y as number, k: Date.now() });
+  };
 
   return (
     <div className="mapview">
@@ -345,9 +363,7 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
 
               {/* точки (прячем во время обводки) */}
               {!drawId &&
-                visiblePins.map(({ pin, x, y }) => {
-                const isZone = pin.category === 'zone';
-                const draggable = editMode && isZone;
+                visiblePins.map(({ pin, x, y, isZone, zoneId }) => {
                 return (
                   <Marker
                     key={pin.id}
@@ -357,16 +373,20 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
                         ? zonePinIcon(hoverPin === pin.id)
                         : catPinIcon(pin.category, hoverPin === pin.id)
                     }
-                    draggable={draggable}
+                    draggable={editMode}
                     eventHandlers={{
-                      click: () => openPinZone(pin.zone),
+                      click: () => {
+                        if (editMode && !isZone) setEditPin(pin);
+                        else openPinZone(pin.zone);
+                      },
                       mouseover: () => setHoverPin(pin.id),
                       mouseout: () => setHoverPin(null),
                       dragend: (e) => {
-                        if (!isZone) return;
                         const ll = (e.target as L.Marker).getLatLng();
-                        const zid = pin.id.replace(/^zone-/, '');
-                        onPlaceZone(zid, Math.round(ll.lng), Math.round(H - ll.lat));
+                        const nx = Math.round(ll.lng);
+                        const ny = Math.round(H - ll.lat);
+                        if (isZone) onPlaceZone(zoneId as string, nx, ny);
+                        else onSavePin({ ...pin, x: nx, y: ny });
                       },
                     }}
                   >
@@ -479,6 +499,81 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
               </div>
             )}
 
+            {editMode && !drawId && (
+              <button className="map-add-pin" onClick={addPin} title="Добавить точку">
+                + точка
+              </button>
+            )}
+
+            {editPin && (
+              <div className="pin-editor-overlay" onClick={() => setEditPin(null)}>
+                <div className="pin-editor" onClick={(e) => e.stopPropagation()}>
+                  <h3>Точка на карте</h3>
+                  <label className="form-row">
+                    <span>Название</span>
+                    <input
+                      value={editPin.title}
+                      onChange={(e) => setEditPin({ ...editPin, title: e.target.value })}
+                    />
+                  </label>
+                  <label className="form-row">
+                    <span>Категория</span>
+                    <select
+                      className="form-select"
+                      value={editPin.category}
+                      onChange={(e) =>
+                        setEditPin({ ...editPin, category: e.target.value as MapPinCategory })
+                      }
+                    >
+                      {PIN_CATEGORIES.filter((c) => c.id !== 'zone').map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.glyph} {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="form-row">
+                    <span>Зона (откроется по клику)</span>
+                    <select
+                      className="form-select"
+                      value={editPin.zone}
+                      onChange={(e) => setEditPin({ ...editPin, zone: e.target.value })}
+                    >
+                      <option value="">—</option>
+                      {zones.map((z) => (
+                        <option key={z.id} value={z.name}>
+                          {z.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="pin-editor-actions">
+                    <button
+                      className="form-btn form-btn-save"
+                      onClick={() => {
+                        onSavePin(editPin);
+                        setEditPin(null);
+                      }}
+                    >
+                      ✓ Сохранить
+                    </button>
+                    <button className="form-btn form-btn-cancel" onClick={() => setEditPin(null)}>
+                      Закрыть
+                    </button>
+                    <button
+                      className="form-btn form-btn-delete"
+                      onClick={() => {
+                        onDeletePin(editPin.id);
+                        setEditPin(null);
+                      }}
+                    >
+                      🗑 Удалить
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="map-attribution">Карта © Blizzard Entertainment</div>
           </div>
 
@@ -486,7 +581,7 @@ export default function MapPage({ zones, editMode, onZone, onPlaceZone, onSavePo
             {drawId
               ? 'Кликай по краю зоны — ставь точки контура. Точку тащи — двигать, клик по точке — удалить. Затем «Готово».'
               : editMode
-                ? 'Режим редактирования: перетащи пин зоны или нажми «Обвести» у зоны в списке.'
+                ? 'Edit: тащи любой пин чтобы двигать, клик по точке-категории — правка, «+ точка» — добавить, «Обвести» у зоны — контур.'
                 : 'Колесо — зум, перетаскивание — двигать карту. Клик по точке — открыть зону.'}
           </div>
         </div>

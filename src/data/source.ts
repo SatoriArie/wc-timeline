@@ -1,4 +1,4 @@
-import type { Character, Organization, TimelineEvent, Zone } from './types';
+import type { Character, MapPin, Organization, TimelineEvent, Zone } from './types';
 import { supabase, isCloud } from './supabase';
 
 // Источник данных. Читает из Supabase (если настроен), иначе — статические JSON
@@ -9,9 +9,10 @@ export interface Content {
   characters: Character[];
   zones: Zone[];
   organizations: Organization[];
+  pins: MapPin[];
 }
 
-export type DatasetId = 'events' | 'characters' | 'zones' | 'organizations';
+export type DatasetId = 'events' | 'characters' | 'zones' | 'organizations' | 'pins';
 
 const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
@@ -109,6 +110,28 @@ function normOrg(o: Partial<Organization>): Organization {
     color: o.color ?? '#b58b4a',
   };
 }
+const MAP_CATS = new Set([
+  'zone',
+  'dungeon',
+  'raid',
+  'world_boss',
+  'flight_path',
+  'quest',
+  'pvp',
+  'lore',
+  'world_event',
+]);
+function normPin(p: Partial<MapPin>): MapPin {
+  return {
+    id: String(p.id ?? cryptoId()),
+    title: p.title ?? 'Без названия',
+    category: (MAP_CATS.has(p.category as string) ? p.category : 'lore') as MapPin['category'],
+    zone: p.zone ?? '',
+    score: typeof p.score === 'number' ? p.score : 0,
+    x: Number.isFinite(p.x) ? (p.x as number) : 0,
+    y: Number.isFinite(p.y) ? (p.y as number) : 0,
+  };
+}
 function cryptoId(): string {
   return 'item-' + Math.random().toString(36).slice(2, 9);
 }
@@ -118,12 +141,14 @@ function normalizeAll(
   characters: unknown,
   zones: unknown,
   organizations: unknown,
+  pins: unknown,
 ): Content {
   return {
     events: arr<Partial<TimelineEvent>>(events).map(normEvent).sort((a, b) => a.sortYear - b.sortYear),
     characters: arr<Partial<Character>>(characters).map(normCharacter),
     zones: arr<Partial<Zone>>(zones).map(normZone),
     organizations: arr<Partial<Organization>>(organizations).map(normOrg),
+    pins: arr<Partial<MapPin>>(pins).map(normPin),
   };
 }
 
@@ -135,13 +160,14 @@ async function fetchJson(file: string): Promise<unknown> {
   return res.json();
 }
 async function fetchStatic(): Promise<Content> {
-  const [events, characters, zones, organizations] = await Promise.all([
+  const [events, characters, zones, organizations, pins] = await Promise.all([
     fetchJson('events.json'),
     fetchJson('characters.json'),
     fetchJson('zones.json'),
     fetchJson('organizations.json').catch(() => []),
+    fetchJson('pins.json').catch(() => []),
   ]);
-  return normalizeAll(events, characters, zones, organizations);
+  return normalizeAll(events, characters, zones, organizations, pins);
 }
 
 // --- облачный источник (Supabase) ---
@@ -160,7 +186,11 @@ async function fetchCloud(): Promise<Content | null> {
   if (!Array.isArray(organizations) || organizations.length === 0) {
     organizations = await fetchJson('organizations.json').catch(() => []);
   }
-  return normalizeAll(by.events, by.characters, by.zones, organizations);
+  let pins = by.pins;
+  if (!Array.isArray(pins) || pins.length === 0) {
+    pins = await fetchJson('pins.json').catch(() => []);
+  }
+  return normalizeAll(by.events, by.characters, by.zones, organizations, pins);
 }
 
 /** Принудительно загрузить базовые данные из репозитория (public/data), минуя облако. */
@@ -192,4 +222,5 @@ export async function seedCloud(content: Content): Promise<void> {
   await saveDataset('characters', content.characters);
   await saveDataset('zones', content.zones);
   await saveDataset('organizations', content.organizations);
+  await saveDataset('pins', content.pins);
 }
