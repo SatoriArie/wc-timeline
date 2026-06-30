@@ -60,23 +60,25 @@ function autoPos(region: string, idx: number): { x: number; y: number } {
   return { x: r.cx - stepX * 1.5 + col * stepX, y: r.cy - stepY + row * stepY };
 }
 
-function zonePinIcon(active: boolean): L.DivIcon {
-  return L.divIcon({
-    className: 'map-pin-wrap',
-    html: `<span class="map-zone-pin${active ? ' active' : ''}"></span>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-}
-function catPinIcon(cat: MapPinCategory, active: boolean): L.DivIcon {
-  const m = pinCategoryMeta(cat);
-  return L.divIcon({
-    className: 'map-pin-wrap',
-    html: `<span class="map-cat-pin${active ? ' active' : ''}" style="--pc:${m.color}">${m.glyph}</span>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-}
+// Иконки создаём ОДИН раз (стабильные ссылки) — иначе react-leaflet вызывает
+// setIcon на каждый рендер и ломает перетаскивание маркера. Подсветка — через CSS :hover.
+const ZONE_ICON = L.divIcon({
+  className: 'map-pin-wrap',
+  html: '<span class="map-zone-pin"></span>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+const CAT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
+  PIN_CATEGORIES.map((c) => [
+    c.id,
+    L.divIcon({
+      className: 'map-pin-wrap',
+      html: `<span class="map-cat-pin" style="--pc:${c.color}">${c.glyph}</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    }),
+  ]),
+);
 
 function FitBounds() {
   const map = useMap();
@@ -136,7 +138,6 @@ export default function MapPage({
   onDeletePin,
 }: Props) {
   const [query, setQuery] = useState('');
-  const [hoverPin, setHoverPin] = useState<string | null>(null);
   const [hoverZonePoly, setHoverZonePoly] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; k: number } | null>(null);
   // обводка зоны
@@ -338,19 +339,13 @@ export default function MapPage({
                   <Marker
                     key={pin.id}
                     position={at(x, y)}
-                    icon={
-                      isZone
-                        ? zonePinIcon(hoverPin === pin.id)
-                        : catPinIcon(pin.category, hoverPin === pin.id)
-                    }
+                    icon={isZone ? ZONE_ICON : CAT_ICONS[pin.category] ?? ZONE_ICON}
                     draggable={editMode}
                     eventHandlers={{
                       click: () => {
                         if (editMode && !isZone) setEditPin(pin);
                         else openPinZone(pin.zone);
                       },
-                      mouseover: () => setHoverPin(pin.id),
-                      mouseout: () => setHoverPin(null),
                       dragend: (e) => {
                         const ll = (e.target as L.Marker).getLatLng();
                         const nx = Math.round(ll.lng);
@@ -610,8 +605,6 @@ export default function MapPage({
                         }
                       : undefined
                   }
-                  onMouseEnter={() => setHoverPin(`zone-${z.id}`)}
-                  onMouseLeave={() => setHoverPin(null)}
                   onClick={() => {
                     if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
                     onZone(z);
