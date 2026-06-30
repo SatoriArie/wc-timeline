@@ -81,7 +81,11 @@ function catPinIcon(cat: MapPinCategory, active: boolean): L.DivIcon {
 function FitBounds() {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(BOUNDS, { padding: [10, 10] });
+    const s = map.getSize();
+    const zCover = Math.max(Math.log2(s.x / W), Math.log2(s.y / H));
+    const zContain = Math.min(Math.log2(s.x / W), Math.log2(s.y / H));
+    map.setMinZoom(zContain - 1);
+    map.setView([H / 2, W / 2], zCover, { animate: false });
   }, [map]);
   return null;
 }
@@ -132,7 +136,6 @@ export default function MapPage({
   onDeletePin,
 }: Props) {
   const [query, setQuery] = useState('');
-  const [hoverRegion, setHoverRegion] = useState<string | null>(null);
   const [hoverPin, setHoverPin] = useState<string | null>(null);
   const [hoverZonePoly, setHoverZonePoly] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; k: number } | null>(null);
@@ -327,39 +330,6 @@ export default function MapPage({
                   </Polygon>
                 ) : null,
               )}
-
-              {/* регионы-хотспоты (запаска, прячем во время обводки) */}
-              {!drawId &&
-                REGIONS.map((r) => {
-                const half = 720;
-                const halfH = 640;
-                return (
-                  <Polygon
-                    key={r.name}
-                    positions={[
-                      at(r.cx - half, r.cy - halfH),
-                      at(r.cx + half, r.cy - halfH),
-                      at(r.cx + half, r.cy + halfH),
-                      at(r.cx - half, r.cy + halfH),
-                    ]}
-                    pathOptions={{
-                      color: '#d8b46a',
-                      weight: hoverRegion === r.name ? 2 : 1,
-                      opacity: hoverRegion === r.name ? 0.5 : 0.12,
-                      fillColor: '#d8b46a',
-                      fillOpacity: hoverRegion === r.name ? 0.1 : 0.02,
-                    }}
-                    eventHandlers={{
-                      mouseover: () => setHoverRegion(r.name),
-                      mouseout: () => setHoverRegion(null),
-                    }}
-                  >
-                    <Tooltip direction="center" className="map-region-tip" sticky>
-                      {r.name}
-                    </Tooltip>
-                  </Polygon>
-                );
-              })}
 
               {/* точки (прячем во время обводки) */}
               {!drawId &&
