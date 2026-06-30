@@ -84,6 +84,10 @@ function FitBounds() {
   const map = useMap();
   useEffect(() => {
     const s = map.getSize();
+    if (!s.x || !s.y) {
+      map.fitBounds(BOUNDS, { padding: [10, 10] });
+      return;
+    }
     const zCover = Math.max(Math.log2(s.x / W), Math.log2(s.y / H));
     const zContain = Math.min(Math.log2(s.x / W), Math.log2(s.y / H));
     map.setMinZoom(zContain - 1);
@@ -197,11 +201,18 @@ export default function MapPage({
     return out;
   }, [zones, zoneCoord, pins]);
 
-  const maxScore = useMemo(() => Math.max(1, ...allPins.map((p) => p.pin.score)), [allPins]);
+  // максимум для слайдера — по контент-пинам (зоны со score=50 не учитываем)
+  const maxScore = useMemo(
+    () => allPins.reduce((m, p) => (p.isZone ? m : Math.max(m, p.pin.score)), 1),
+    [allPins],
+  );
 
-  // видимые точки после фильтров
+  // видимые точки после фильтров; зоны фильтруем только по категории, не по популярности
   const visiblePins = useMemo(
-    () => allPins.filter((p) => enabled.has(p.pin.category) && p.pin.score >= minScore),
+    () =>
+      allPins.filter(
+        (p) => enabled.has(p.pin.category) && (p.isZone || p.pin.score >= minScore),
+      ),
     [allPins, enabled, minScore],
   );
 
@@ -265,7 +276,7 @@ export default function MapPage({
 
   const addPin = () => {
     const p: MapPin = {
-      id: `pin-${Date.now().toString(36)}`,
+      id: `pin-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       title: 'Новая точка',
       category: 'lore',
       zone: '',
@@ -598,6 +609,8 @@ export default function MapPage({
                 <div
                   key={z.id}
                   className="map-zone-card"
+                  role="button"
+                  tabIndex={0}
                   style={
                     thumb
                       ? {
@@ -608,6 +621,13 @@ export default function MapPage({
                   onClick={() => {
                     if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
                     onZone(z);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
+                      onZone(z);
+                    }
                   }}
                 >
                   <span className="map-zone-card-name">{z.name}</span>
