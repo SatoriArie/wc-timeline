@@ -91,7 +91,7 @@ function FitBounds() {
     const onUser = () => {
       userMoved = true;
     };
-    const SNAP = 0.5; // = zoomSnap
+    const SNAP = 0.25; // = zoomSnap
     const fit = () => {
       if (userMoved) return;
       const s = map.getSize();
@@ -326,9 +326,9 @@ export default function MapPage({
               bounds={BOUNDS}
               minZoom={-5}
               maxZoom={1}
-              zoomSnap={0.5}
-              zoomDelta={1}
-              wheelPxPerZoomLevel={140}
+              zoomSnap={0.25}
+              zoomDelta={0.5}
+              wheelPxPerZoomLevel={100}
               zoomControl={false}
               attributionControl={false}
               maxBounds={[
