@@ -6,6 +6,7 @@ import {
   Polygon,
   Polyline,
   Tooltip,
+  ZoomControl,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -83,15 +84,41 @@ const CAT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
 function FitBounds() {
   const map = useMap();
   useEffect(() => {
-    const s = map.getSize();
-    if (!s.x || !s.y) {
-      map.fitBounds(BOUNDS, { padding: [10, 10] });
-      return;
-    }
-    const zCover = Math.max(Math.log2(s.x / W), Math.log2(s.y / H));
-    const zContain = Math.min(Math.log2(s.x / W), Math.log2(s.y / H));
-    map.setMinZoom(zContain - 1);
-    map.setView([H / 2, W / 2], zCover, { animate: false });
+    // cover-фит: карта заполняет канвас целиком (без пустых полос).
+    // Перефитим, пока лэйаут дособирается (ленивая загрузка/полноширинный канвас),
+    // и прекращаем, как только пользователь сам тронул карту.
+    let userMoved = false;
+    const onUser = () => {
+      userMoved = true;
+    };
+    const SNAP = 0.5; // = zoomSnap
+    const fit = () => {
+      if (userMoved) return;
+      const s = map.getSize();
+      if (!s.x || !s.y) return;
+      // округляем ВВЕРХ до сетки snap, иначе zoomSnap округлит вниз и карта не покроет канвас
+      const zCover = Math.ceil(Math.log2(Math.max(s.x / W, s.y / H)) / SNAP) * SNAP;
+      const zContain = Math.floor(Math.log2(Math.min(s.x / W, s.y / H)) / SNAP) * SNAP;
+      map.setMinZoom(zContain - SNAP);
+      map.setView([H / 2, W / 2], zCover, { animate: false });
+    };
+    const boot = () => {
+      map.invalidateSize();
+      fit();
+    };
+    map.whenReady(boot);
+    map.on('resize', fit);
+    map.on('zoomstart', onUser);
+    map.on('dragstart', onUser);
+    const t1 = setTimeout(boot, 200);
+    const t2 = setTimeout(boot, 600);
+    return () => {
+      map.off('resize', fit);
+      map.off('zoomstart', onUser);
+      map.off('dragstart', onUser);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [map]);
   return null;
 }
@@ -299,7 +326,9 @@ export default function MapPage({
               bounds={BOUNDS}
               minZoom={-5}
               maxZoom={1}
-              zoomSnap={0.25}
+              zoomSnap={0.5}
+              zoomDelta={1}
+              wheelPxPerZoomLevel={140}
               zoomControl={false}
               attributionControl={false}
               maxBounds={[
@@ -309,6 +338,7 @@ export default function MapPage({
               maxBoundsViscosity={0.7}
               className="leaflet-azeroth"
             >
+              <ZoomControl position="topright" />
               <FitBounds />
               <FlyTo target={flyTarget} />
               <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} interactive={false} />
