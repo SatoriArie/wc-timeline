@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { Character, MapPin, Organization, PageId, TimelineEvent, Zone } from './data/types';
 import { downloadJson, readJsonFile, useContent } from './hooks/useContent';
 import { useAuth } from './hooks/useAuth';
@@ -17,7 +17,8 @@ import CosmologyPage from './components/CosmologyPage';
 import PantheonsPage from './components/PantheonsPage';
 import OrganizationsPage from './components/OrganizationsPage';
 import HomePage from './components/HomePage';
-import MapPage from './components/MapPage';
+// карта тянет за собой Leaflet — грузим лениво, только при открытии вкладки «Карта»
+const MapPage = lazy(() => import('./components/MapPage'));
 
 type Entity = TimelineEvent | Character | Zone | Organization;
 type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'map';
@@ -578,16 +579,25 @@ export default function App() {
           <ZonesPage zones={c.zones} onSelect={openForView.zones} initialRegion={pendingRegion} />
         )}
         {c.status === 'ready' && page === 'map' && (
-          <MapPage
-            zones={c.zones}
-            pins={c.pins}
-            editMode={editMode}
-            onZone={openForView.zones}
-            onPlaceZone={saveZoneCoords}
-            onSavePoly={saveZonePoly}
-            onSavePin={savePin}
-            onDeletePin={deletePin}
-          />
+          <Suspense
+            fallback={
+              <div className="loader">
+                <span className="loader-rune">✦</span>
+                <p>Разворачиваем карту Азерота…</p>
+              </div>
+            }
+          >
+            <MapPage
+              zones={c.zones}
+              pins={c.pins}
+              editMode={editMode}
+              onZone={openForView.zones}
+              onPlaceZone={saveZoneCoords}
+              onSavePoly={saveZonePoly}
+              onSavePin={savePin}
+              onDeletePin={deletePin}
+            />
+          </Suspense>
         )}
         {page === 'cosmology' && <CosmologyPage />}
         {page === 'pantheons' && <PantheonsPage />}
