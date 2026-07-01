@@ -11,11 +11,11 @@ import ZonesPage from './components/ZonesPage';
 import EventModal from './components/EventModal';
 import CharacterModal from './components/CharacterModal';
 import ZoneModal from './components/ZoneModal';
-import OrganizationModal from './components/OrganizationModal';
 import EditModal from './components/EditModal';
 import CosmologyPage from './components/CosmologyPage';
 import PantheonsPage from './components/PantheonsPage';
 import OrganizationsPage from './components/OrganizationsPage';
+import FactionPage from './components/FactionPage';
 import HomePage from './components/HomePage';
 // карта тянет за собой Leaflet — грузим лениво, только при открытии вкладки «Карта»
 const MapPage = lazy(() => import('./components/MapPage'));
@@ -275,13 +275,24 @@ export default function App() {
         .filter((r) => r.character)
     : [];
 
-  // данные для карточки фракции: состав, зоны влияния, летопись
+  // данные для страницы фракции: главы, состав, зоны влияния, летопись
+  const orgLeaders = useMemo(
+    () =>
+      activeOrg
+        ? activeOrg.leaders
+            .map((m) => (charsById[m.id] ? { character: charsById[m.id], former: m.former } : null))
+            .filter((x): x is { character: Character; former: boolean | undefined } => x !== null)
+        : [],
+    [activeOrg, charsById],
+  );
   const orgMembers = useMemo(
     () =>
       activeOrg
-        ? c.characters.filter((ch) => ch.affiliations.includes(activeOrg.name))
+        ? activeOrg.members
+            .map((m) => (charsById[m.id] ? { character: charsById[m.id], former: m.former } : null))
+            .filter((x): x is { character: Character; former: boolean | undefined } => x !== null)
         : [],
-    [activeOrg, c.characters],
+    [activeOrg, charsById],
   );
   const orgZones = useMemo(
     () => (activeOrg ? c.zones.filter((z) => z.factions.includes(activeOrg.name)) : []),
@@ -309,12 +320,10 @@ export default function App() {
   const openOrgChar = (id: string) => {
     const ch = charsById[id];
     if (!ch) return;
-    setActiveOrg(null);
-    setTimeout(() => setActiveCharacter(ch), 250);
+    setActiveCharacter(ch);
   };
   const openOrgZone = (z: Zone) => {
-    setActiveOrg(null);
-    setTimeout(() => setActiveZone(z), 250);
+    setActiveZone(z);
   };
 
   const openEventFromRef = (e: TimelineEvent) => {
@@ -330,11 +339,12 @@ export default function App() {
   const openFaction = (name: string) => {
     const org = c.organizations.find((o) => o.name === name);
     if (org) {
-      // открыть детальную карточку фракции
+      // открыть полную страницу фракции
       setActiveCharacter(null);
       setActiveZone(null);
       setActiveEvent(null);
-      setTimeout(() => setActiveOrg(org), 250);
+      setPage('organizations');
+      setActiveOrg(org);
       return;
     }
     // нет такой организации — перейти на вкладку и подсветить (старое поведение)
@@ -618,12 +628,24 @@ export default function App() {
         )}
         {page === 'cosmology' && <CosmologyPage />}
         {page === 'pantheons' && <PantheonsPage />}
-        {c.status === 'ready' && page === 'organizations' && (
+        {c.status === 'ready' && page === 'organizations' && !activeOrg && (
           <OrganizationsPage
             organizations={c.organizations}
             onSelect={openForView.organizations}
             highlight={factionTarget}
             onHighlightDone={() => setFactionTarget(undefined)}
+          />
+        )}
+        {c.status === 'ready' && page === 'organizations' && activeOrg && (
+          <FactionPage
+            organization={activeOrg}
+            leaders={orgLeaders}
+            members={orgMembers}
+            zones={orgZones}
+            chronicle={orgChronicle}
+            onBack={() => setActiveOrg(null)}
+            onCharacter={openOrgChar}
+            onZone={openOrgZone}
           />
         )}
       </div>
@@ -656,15 +678,6 @@ export default function App() {
         onFaction={openFaction}
       />
       <ZoneModal zone={activeZone} onClose={() => setActiveZone(null)} onFaction={openFaction} />
-      <OrganizationModal
-        organization={activeOrg}
-        members={orgMembers}
-        zones={orgZones}
-        chronicle={orgChronicle}
-        onClose={() => setActiveOrg(null)}
-        onCharacter={openOrgChar}
-        onZone={openOrgZone}
-      />
 
       {/* Редактирование */}
       <EditModal
