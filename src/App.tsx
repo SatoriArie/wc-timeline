@@ -454,6 +454,7 @@ export default function App() {
                 className={`nav-tab ${page === t.id ? 'active' : ''}`}
                 onClick={() => {
                   setPendingRegion(undefined);
+                  setActiveOrg(null);
                   setPage(t.id);
                 }}
               >
