@@ -1,5 +1,7 @@
 import type { Zone, ZoneChronicle } from '../data/types';
 import { eraOrder, eraTheme, shortEra } from '../data';
+import { zoneThumb } from '../data/zoneThumbs';
+import { assetUrl } from '../utils/asset';
 import Modal from './Modal';
 import { AllianceCrest, EraSigil, HordeCrest } from './icons';
 
@@ -96,9 +98,23 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
     <Modal open={!!zone} onClose={onClose}>
       {zone && (
         <>
-          <h2>{zone.name}</h2>
-          <span className="modal-subtitle">{zone.region}</span>
-          <div className="modal-divider" />
+          {(() => {
+            const img = zoneThumb(zone.name) ?? (zone.images[0] ? assetUrl(zone.images[0]) : null);
+            return img ? (
+              <div className="zone-hero" style={{ backgroundImage: `url(${img})` }}>
+                <div className="zone-hero-cap">
+                  <h2>{zone.name}</h2>
+                  <span className="modal-subtitle">{zone.region}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2>{zone.name}</h2>
+                <span className="modal-subtitle">{zone.region}</span>
+                <div className="modal-divider" />
+              </>
+            );
+          })()}
 
           {hasInfo && (
             <section>

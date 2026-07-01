@@ -14,6 +14,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MapPin, MapPinCategory, Zone } from '../data/types';
 import { PIN_CATEGORIES, pinCategoryMeta } from '../data';
+import { zoneThumb } from '../data/zoneThumbs';
 import { assetUrl } from '../utils/asset';
 
 interface Props {
@@ -637,30 +638,25 @@ export default function MapPage({
           <div className="map-zone-list">
             {zoneList.length === 0 && <p className="modal-meta">Ничего не найдено.</p>}
             {zoneList.map((z) => {
-              const thumb = z.images[0];
-              const c = zoneCoord.get(z.name);
+              const thumbUrl = zoneThumb(z.name) ?? (z.images[0] ? assetUrl(z.images[0]) : undefined);
               const cnt = pinsPerZone[z.name] ?? 0;
               return (
                 <div
                   key={z.id}
-                  className="map-zone-card"
+                  className={`map-zone-card${thumbUrl ? '' : ' no-thumb'}`}
                   role="button"
                   tabIndex={0}
                   style={
-                    thumb
+                    thumbUrl
                       ? {
-                          backgroundImage: `linear-gradient(90deg, rgba(20,14,8,.82), rgba(20,14,8,.45)), url(${assetUrl(thumb)})`,
+                          backgroundImage: `linear-gradient(0deg, rgba(10,7,4,.92) 8%, rgba(10,7,4,.35) 60%, rgba(10,7,4,.15)), url(${thumbUrl})`,
                         }
                       : undefined
                   }
-                  onClick={() => {
-                    if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
-                    onZone(z);
-                  }}
+                  onClick={() => onZone(z)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      if (c) setFlyTarget({ x: c.x, y: c.y, k: Date.now() });
                       onZone(z);
                     }
                   }}
