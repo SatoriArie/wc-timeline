@@ -35,6 +35,7 @@ function save(name, data) {
 const portraits = groupById('portraits');
 const eventImgs = groupById('events');
 const zoneImgs = groupById('zones');
+const emblems = groupById('emblems');
 
 const characters = load('characters.json');
 let cCount = 0;
@@ -63,19 +64,31 @@ for (const z of zones) {
   }
 }
 
+const organizations = load('organizations.json');
+let oCount = 0;
+for (const o of organizations) {
+  if (emblems[o.id]?.length) {
+    o.emblem = emblems[o.id][0];
+    oCount++;
+  }
+}
+
 save('characters.json', characters);
 save('events.json', events);
 save('zones.json', zones);
+save('organizations.json', organizations);
 
 console.log(`✓ Портреты: ${cCount} персонажей`);
 console.log(`✓ События:  ${eCount} с картинками`);
 console.log(`✓ Зоны:     ${zCount} с картинками`);
+console.log(`✓ Гербы:    ${oCount} фракций`);
 
 // предупредить о файлах без совпадения id
 const ids = {
   portraits: new Set(characters.map((c) => c.id)),
   events: new Set(events.map((e) => e.id)),
   zones: new Set(zones.map((z) => z.id)),
+  emblems: new Set(organizations.map((o) => o.id)),
 };
 for (const [rel, set] of Object.entries(ids)) {
   for (const id of Object.keys(groupById(rel))) {
