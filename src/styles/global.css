@@ -1903,6 +1903,8 @@ a {
   padding: 38px 42px;
   overflow: hidden;
 }
+/* Глава(ы)/Состав — тот же левый отступ, что у текста «О фракции» рядом с гербом (210px + 24px margin char-aside) */
+.faction-indent { margin-left: 234px; }
 
 .modal-portrait {
   display: block;

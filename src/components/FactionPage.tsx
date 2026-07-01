@@ -114,7 +114,7 @@ export default function FactionPage({
       <div className="char-clear" />
 
       {leaders.length > 0 && (
-        <section>
+        <section className="faction-indent">
           <h3>{leaders.length > 1 ? 'Главы' : 'Глава'}</h3>
           <div className="ref-list">
             {leaders.map((l) => (
@@ -133,7 +133,7 @@ export default function FactionPage({
       )}
 
       {members.length > 0 && (
-        <section>
+        <section className="faction-indent">
           <h3>Состав ({members.length})</h3>
           <div className="ref-list">
             {members.map((m) => (
