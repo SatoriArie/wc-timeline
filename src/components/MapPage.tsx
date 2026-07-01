@@ -127,11 +127,13 @@ function FitBounds() {
   }, [map]);
   return null;
 }
-function FlyTo({ target }: { target: { x: number; y: number; k: number } | null }) {
+function FlyTo({ target }: { target: { x: number; y: number; k: number; zoom?: number } | null }) {
   const map = useMap();
   useEffect(() => {
-    // фокус на зоне: умеренный зум (а не максимальный), если ещё не приближено
-    if (target) map.flyTo(at(target.x, target.y), Math.max(map.getZoom(), -1), { duration: 0.6 });
+    if (target) {
+      const z = target.zoom ?? Math.max(map.getZoom(), -1);
+      map.flyTo(at(target.x, target.y), z, { duration: 0.6 });
+    }
   }, [target, map]);
   return null;
 }
@@ -176,7 +178,12 @@ export default function MapPage({
 }: Props) {
   const [query, setQuery] = useState('');
   const [hoverZonePoly, setHoverZonePoly] = useState<string | null>(null);
-  const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; k: number } | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{
+    x: number;
+    y: number;
+    k: number;
+    zoom?: number;
+  } | null>(null);
   // обводка зоны
   const [drawId, setDrawId] = useState<string | null>(null);
   const [drawPts, setDrawPts] = useState<[number, number][]>([]);
@@ -640,6 +647,9 @@ export default function MapPage({
             {zoneList.map((z) => {
               const thumbUrl = zoneThumb(z.name) ?? (z.images[0] ? assetUrl(z.images[0]) : undefined);
               const cnt = pinsPerZone[z.name] ?? 0;
+              const c = zoneCoord.get(z.name);
+              // клик по карточке — крупный зум на зону (карточку зоны открывают через пин)
+              const flyTo = () => c && setFlyTarget({ x: c.x, y: c.y, k: Date.now(), zoom: 0.5 });
               return (
                 <div
                   key={z.id}
@@ -653,11 +663,11 @@ export default function MapPage({
                         }
                       : undefined
                   }
-                  onClick={() => onZone(z)}
+                  onClick={flyTo}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onZone(z);
+                      flyTo();
                     }
                   }}
                 >

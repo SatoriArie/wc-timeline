@@ -2,16 +2,16 @@
    Хроники Азерота — визуальная система «Арканный Кодекс»
    ============================================================ */
 
-/* Шрифты Blizzard (фан-использование, как на classic+) */
+/* Шрифты Blizzard с КИРИЛЛИЦЕЙ (ruRU-версии из WoW: Friz Quadrata Cyrillic + Morpheus Cyrillic) */
 @font-face {
   font-family: 'Friz Quadrata';
-  src: url('../assets/fonts/friz-quadrata.woff') format('woff');
+  src: url('../assets/fonts/friz-quadrata-cyr.ttf') format('truetype');
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Morpheus';
-  src: url('../assets/fonts/morpheus.woff') format('woff');
+  src: url('../assets/fonts/morpheus-cyr.ttf') format('truetype');
   font-weight: normal;
   font-display: swap;
 }
@@ -907,7 +907,9 @@ a {
 .map-aside {
   width: 320px;
   flex-shrink: 0;
-  align-self: stretch;
+  align-self: flex-start;
+  height: 85vh; /* ровно как карта (.leaflet-azeroth), внутри скроллится список */
+  min-height: 540px;
   background: linear-gradient(160deg, rgba(22, 32, 54, 0.7), rgba(12, 20, 36, 0.7));
   border: 1px solid var(--panel-border);
   border-radius: 14px;
@@ -915,6 +917,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow: hidden;
 }
 .map-aside-title {
   font-family: var(--font-display);
