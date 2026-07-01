@@ -23,11 +23,11 @@ const MapPage = lazy(() => import('./components/MapPage'));
 type Entity = TimelineEvent | Character | Zone | Organization;
 type Tab = PageId | 'home' | 'cosmology' | 'pantheons' | 'map';
 
+// «Зоны» — скрытая админ-страница (редактирование зон); публично доступна только через Карту
 const TABS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Главная' },
   { id: 'events', label: 'События' },
   { id: 'characters', label: 'Персонажи' },
-  { id: 'zones', label: 'Зоны' },
   { id: 'map', label: 'Карта' },
   { id: 'cosmology', label: 'Космология' },
   { id: 'pantheons', label: 'Пантеоны' },
@@ -364,7 +364,8 @@ export default function App() {
     } else if (kind === 'zone' && id) {
       const z = lookup.current.zones.find((x) => x.id === id);
       if (z) {
-        setPage('zones');
+        // «Зоны» — скрытая админ-страница, обычным посетителям зону показываем поверх Карты
+        setPage('map');
         setActiveZone(z);
       }
     } else if (kind === 'faction' && id) {
@@ -467,6 +468,12 @@ export default function App() {
         {editMode && (isData || page === 'map') && (
           <div className="edit-banner">
             <span>Режим редактирования.</span>
+
+            {page === 'map' && (
+              <button className="icon-btn" onClick={() => setPage('zones')}>
+                📋 Список зон
+              </button>
+            )}
 
             {isCloud ? (
               auth.email ? (
@@ -574,7 +581,6 @@ export default function App() {
           <HomePage
             events={c.events}
             characters={c.characters}
-            zones={c.zones}
             onNavigate={setPage}
             onOpenEvent={(e) => setActiveEvent(e)}
           />

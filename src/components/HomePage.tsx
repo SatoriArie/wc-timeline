@@ -1,23 +1,22 @@
 import { useMemo, useState } from 'react';
-import type { Character, TimelineEvent, Zone } from '../data/types';
+import type { Character, TimelineEvent } from '../data/types';
 import { eraOrder } from '../data';
 import { EraSigil } from './icons';
 
 interface Props {
   events: TimelineEvent[];
   characters: Character[];
-  zones: Zone[];
-  onNavigate: (tab: 'events' | 'characters' | 'zones' | 'cosmology' | 'pantheons') => void;
+  onNavigate: (tab: 'map' | 'events' | 'characters' | 'cosmology' | 'pantheons') => void;
   onOpenEvent: (e: TimelineEvent) => void;
 }
 
 const shortEra = (era: string) => era.split('.')[0].trim();
 
-export default function HomePage({ events, characters, zones, onNavigate, onOpenEvent }: Props) {
+export default function HomePage({ events, characters, onNavigate, onOpenEvent }: Props) {
   const portals = [
+    { id: 'map' as const, sigil: 4, title: 'Карта Азерота', desc: 'Интерактивная карта и хроники земель' },
     { id: 'events' as const, sigil: 1, title: 'Хроники Событий', desc: `${events.length} событий через ${eraOrder.length} эпох` },
     { id: 'characters' as const, sigil: 3, title: 'Архив Персонажей', desc: `${characters.length} героев и злодеев Азерота` },
-    { id: 'zones' as const, sigil: 4, title: 'Хроники Зон', desc: `${zones.length} земель и их летописи` },
     { id: 'cosmology' as const, sigil: 0, title: 'Космология', desc: 'Шесть сил мироздания' },
     { id: 'pantheons' as const, sigil: 2, title: 'Пантеоны', desc: 'Титаны, Аспекты, Древние Боги' },
   ];

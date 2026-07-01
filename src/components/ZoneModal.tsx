@@ -90,9 +90,7 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
     (zone.inhabitants.length ||
       zone.rulers.length ||
       zone.settlementsMajor.length ||
-      zone.settlementsMinor.length ||
-      zone.factions.length ||
-      zone.region);
+      zone.settlementsMinor.length);
 
   return (
     <Modal open={!!zone} onClose={onClose}>
@@ -116,18 +114,38 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
             );
           })()}
 
-          {hasInfo && (
-            <section>
-              <h3>Основные сведения</h3>
-              <div className="zone-info">
-                <InfoRow label="Обитатели" items={zone.inhabitants} />
-                <InfoRow label="Правители" items={zone.rulers} />
-                <InfoRow label="Крупные поселения" items={zone.settlementsMajor} />
-                <InfoRow label="Малые поселения" items={zone.settlementsMinor} />
-                <InfoRow label="Принадлежность" items={zone.factions} onItem={onFaction} />
-                {zone.region && <InfoRow label="Регион" items={[zone.region]} />}
-              </div>
-            </section>
+          {(hasInfo || zone.factions.length > 0) && (
+            <div className="zone-top-cols">
+              {hasInfo && (
+                <section>
+                  <h3>Основные сведения</h3>
+                  <div className="zone-info">
+                    <InfoRow label="Обитатели" items={zone.inhabitants} />
+                    <InfoRow label="Правители" items={zone.rulers} />
+                    <InfoRow label="Крупные поселения" items={zone.settlementsMajor} />
+                    <InfoRow label="Малые поселения" items={zone.settlementsMinor} />
+                  </div>
+                </section>
+              )}
+
+              {zone.factions.length > 0 && (
+                <section>
+                  <h3>Фракции</h3>
+                  <div className="zone-factions">
+                    {zone.factions.map((f) => (
+                      <button
+                        key={f}
+                        className={`faction-tag ${factionClass(f)} faction-tag-btn zone-faction-chip`}
+                        onClick={() => onFaction(f)}
+                      >
+                        {factionCrest(f)}
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           )}
 
           {groups.length > 0 && (
@@ -140,8 +158,10 @@ export default function ZoneModal({ zone, onClose, onFaction }: Props) {
                     key={era || '__'}
                     style={{ ['--ec' as string]: era ? eraTheme[era] || '#b58b4a' : '#b58b4a' }}
                   >
+                    <div className="chron-node">
+                      <EraSigil index={era ? Math.max(0, eraOrder.indexOf(era)) : 0} size={16} />
+                    </div>
                     <div className="chron-era-head">
-                      {era ? <EraSigil index={Math.max(0, eraOrder.indexOf(era))} size={16} /> : null}
                       <span>{era ? shortEra(era) : 'Общее положение'}</span>
                     </div>
 
