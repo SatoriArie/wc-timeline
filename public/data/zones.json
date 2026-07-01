@@ -595,7 +595,9 @@
         "text": "Полностью находятся под контролем Альянса"
       }
     ],
-    "images": []
+    "images": [
+      "images/zones/teldrassil.jpg"
+    ]
   },
   {
     "id": "temnye-berega",
@@ -745,7 +747,9 @@
         "text": "Лагерь орковЭлементали"
       }
     ],
-    "images": []
+    "images": [
+      "images/zones/azshara.jpg"
+    ]
   },
   {
     "id": "kogtistye-gory",
@@ -809,7 +813,9 @@
         "text": "ОргимарПылающий Клинок"
       }
     ],
-    "images": []
+    "images": [
+      "images/zones/durotar.jpg"
+    ]
   },
   {
     "id": "pustoshi",
@@ -901,7 +907,9 @@
         "text": "НЭ отправили экспедиция на островаСледы Силитидов"
       }
     ],
-    "images": []
+    "images": [
+      "images/zones/feralas.jpg"
+    ]
   },
   {
     "id": "silitus",
