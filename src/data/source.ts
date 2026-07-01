@@ -88,6 +88,7 @@ function normZone(z: LegacyZone): Zone {
     images: arr(z.images),
     ...(Number.isFinite(z.mapX) ? { mapX: z.mapX } : {}),
     ...(Number.isFinite(z.mapY) ? { mapY: z.mapY } : {}),
+    ...(Number.isFinite(z.mapZoom) ? { mapZoom: z.mapZoom } : {}),
     ...(Array.isArray(z.poly)
       ? {
           poly: (z.poly as unknown[])

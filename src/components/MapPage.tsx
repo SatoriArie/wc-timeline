@@ -23,6 +23,7 @@ interface Props {
   editMode: boolean;
   onZone: (z: Zone) => void;
   onPlaceZone: (id: string, x: number, y: number) => void;
+  onSaveZoom: (id: string, zoom: number) => void;
   onSavePoly: (id: string, poly: [number, number][]) => void;
   onSavePin: (pin: MapPin) => void;
   onDeletePin: (id: string) => void;
@@ -62,24 +63,18 @@ function autoPos(region: string, idx: number): { x: number; y: number } {
   return { x: r.cx - stepX * 1.5 + col * stepX, y: r.cy - stepY + row * stepY };
 }
 
-// Иконки создаём ОДИН раз (стабильные ссылки) — иначе react-leaflet вызывает
-// setIcon на каждый рендер и ломает перетаскивание маркера. Подсветка — через CSS :hover.
-const ZONE_ICON = L.divIcon({
-  className: 'map-pin-wrap',
-  html: '<span class="map-zone-pin"></span>',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
-const CAT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
-  PIN_CATEGORIES.map((c) => [
-    c.id,
-    L.divIcon({
-      className: 'map-pin-wrap',
-      html: `<span class="map-cat-pin" style="--pc:${c.color}">${c.glyph}</span>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14],
-    }),
-  ]),
+// Оригинальные WoW-иконки пинов (как на classic+). Создаём ОДИН раз (стабильные ссылки) —
+// иначе react-leaflet вызывает setIcon на каждый рендер и ломает перетаскивание.
+const markerIcon = (name: string): L.Icon =>
+  L.icon({
+    iconUrl: assetUrl(`images/map/markers/${name}.png`),
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    className: 'map-marker-img',
+  });
+const ZONE_ICON = markerIcon('zone');
+const CAT_ICONS: Record<string, L.Icon> = Object.fromEntries(
+  PIN_CATEGORIES.map((c) => [c.id, markerIcon(c.id)]),
 );
 
 function FitBounds() {
@@ -138,6 +133,15 @@ function FlyTo({ target }: { target: { x: number; y: number; k: number; zoom?: n
   return null;
 }
 
+/** Поднимает инстанс карты в стейт родителя (для чтения текущего зума). */
+function MapRef({ onMap }: { onMap: (m: L.Map) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    onMap(map);
+  }, [map, onMap]);
+  return null;
+}
+
 /** Клик по карте в режиме обводки → добавить вершину. */
 function ClickToAdd({ active, onAdd }: { active: boolean; onAdd: (x: number, y: number) => void }) {
   useMapEvents({
@@ -172,6 +176,7 @@ export default function MapPage({
   editMode,
   onZone,
   onPlaceZone,
+  onSaveZoom,
   onSavePoly,
   onSavePin,
   onDeletePin,
@@ -189,6 +194,7 @@ export default function MapPage({
   const [drawPts, setDrawPts] = useState<[number, number][]>([]);
   // редактирование точки
   const [editPin, setEditPin] = useState<MapPin | null>(null);
+  const [mapObj, setMapObj] = useState<L.Map | null>(null);
   const [enabled, setEnabled] = useState<Set<MapPinCategory>>(
     () => new Set(PIN_CATEGORIES.map((c) => c.id)),
   );
@@ -353,6 +359,7 @@ export default function MapPage({
             >
               <ZoomControl position="topright" />
               <FitBounds />
+              <MapRef onMap={setMapObj} />
               <FlyTo target={flyTarget} />
               <ImageOverlay url={assetUrl('images/map/azeroth-bg.webp')} bounds={BOUNDS} interactive={false} />
               <ImageOverlay url={assetUrl('images/map/azeroth-overlay.webp')} bounds={BOUNDS} interactive={false} />
@@ -648,8 +655,9 @@ export default function MapPage({
               const thumbUrl = zoneThumb(z.name) ?? (z.images[0] ? assetUrl(z.images[0]) : undefined);
               const cnt = pinsPerZone[z.name] ?? 0;
               const c = zoneCoord.get(z.name);
-              // клик по карточке — крупный зум на зону (карточку зоны открывают через пин)
-              const flyTo = () => c && setFlyTarget({ x: c.x, y: c.y, k: Date.now(), zoom: 0.5 });
+              // клик по карточке — зум на зону (кадр из z.mapZoom, иначе 0.5); карточку открывает пин
+              const flyTo = () =>
+                c && setFlyTarget({ x: c.x, y: c.y, k: Date.now(), zoom: z.mapZoom ?? 0.5 });
               return (
                 <div
                   key={z.id}
@@ -678,15 +686,27 @@ export default function MapPage({
                     {z.poly && z.poly.length >= 3 && <span className="map-zone-card-poly"> · контур ✓</span>}
                   </span>
                   {editMode && (
-                    <button
-                      className="map-trace-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startDraw(z);
-                      }}
-                    >
-                      {z.poly && z.poly.length >= 3 ? 'Править контур' : 'Обвести'}
-                    </button>
+                    <div className="map-card-edit">
+                      <button
+                        className="map-trace-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startDraw(z);
+                        }}
+                      >
+                        {z.poly && z.poly.length >= 3 ? 'Править контур' : 'Обвести'}
+                      </button>
+                      <button
+                        className="map-trace-btn"
+                        title="Запомнить текущий зум как кадр этой зоны"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (mapObj) onSaveZoom(z.id, Math.round(mapObj.getZoom() * 100) / 100);
+                        }}
+                      >
+                        ⛶ Кадр{typeof z.mapZoom === 'number' ? ' ✓' : ''}
+                      </button>
+                    </div>
                   )}
                 </div>
               );

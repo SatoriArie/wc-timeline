@@ -868,6 +868,17 @@ a {
   font-size: 0.85rem;
   font-family: var(--font-body);
 }
+/* оригинальные WoW-иконки пинов (img) — подсветка через filter, НЕ transform (иначе ломает позицию) */
+.leaflet-marker-icon.map-marker-img {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  transition: filter 0.15s ease;
+}
+.leaflet-marker-icon.map-marker-img:hover {
+  filter: drop-shadow(0 0 7px var(--titan-gold)) brightness(1.12);
+}
+.map-card-edit { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.map-card-edit .map-trace-btn { margin-top: 0; }
+
 /* пины зон (divIcon) */
 .map-pin-wrap { background: none; border: 0; }
 .map-zone-pin {
@@ -989,10 +1000,11 @@ a {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 .map-zone-card-name {
-  font-family: var(--font-head);
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.5px;
   color: var(--gold-bright);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
 }
 .map-zone-card-region {
   font-size: 0.78rem;
@@ -1015,8 +1027,16 @@ a {
   padding: 26px 42px 14px;
   background: linear-gradient(0deg, rgba(10, 7, 4, 0.92) 10%, rgba(10, 7, 4, 0.4) 55%, transparent);
 }
-.zone-hero-cap h2 { margin: 0; }
-.zone-hero-cap .modal-subtitle { color: var(--gold-bright); }
+.zone-hero .zone-hero-cap h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.9);
+}
+.zone-hero .zone-hero-cap .modal-subtitle {
+  color: #ffe8b0;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+}
 .map-zone-card-pins { color: var(--titan-gold); }
 
 /* пины-категории */

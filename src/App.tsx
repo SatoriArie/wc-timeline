@@ -143,6 +143,12 @@ export default function App() {
     pushCloud('zones', next);
   };
 
+  const saveZoneZoom = (id: string, zoom: number) => {
+    const next = c.zones.map((z) => (z.id === id ? { ...z, mapZoom: zoom } : z));
+    c.setZones(next);
+    pushCloud('zones', next);
+  };
+
   const saveZonePoly = (id: string, poly: [number, number][]) => {
     const next = c.zones.map((z) => (z.id === id ? { ...z, poly } : z));
     c.setZones(next);
@@ -597,6 +603,7 @@ export default function App() {
               editMode={editMode}
               onZone={(z) => setActiveZone(z)}
               onPlaceZone={saveZoneCoords}
+              onSaveZoom={saveZoneZoom}
               onSavePoly={saveZonePoly}
               onSavePin={savePin}
               onDeletePin={deletePin}
