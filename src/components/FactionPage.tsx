@@ -73,6 +73,7 @@ export default function FactionPage({
       </span>
       <div className="modal-divider" />
 
+      <div className="faction-parchment">
       <div className="char-aside">
         {organization.emblem ? (
           <img className="faction-emblem-lg" src={assetUrl(organization.emblem)} alt={organization.name} />
@@ -195,6 +196,7 @@ export default function FactionPage({
         groups.length === 0 && (
           <p className="modal-meta">{meta.intro || 'Об этой фракции пока ничего не записано.'}</p>
         )}
+      </div>
     </div>
   );
 }

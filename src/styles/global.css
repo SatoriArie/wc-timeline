@@ -1883,6 +1883,26 @@ a {
   color: #fff;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
+/* панель-«пергамент»: контент фракции переиспользует ink-dark-цвета модалок
+   (.org-note/.char-meta-item/.ref-chip и т.д.), которым нужен светлый фон —
+   на голом тёмном фоне страницы они нечитаемы, поэтому оборачиваем в тот же
+   пергамент, что и .modal */
+.faction-parchment {
+  color: var(--ink-dark);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 207, 87, 0.5);
+  background-color: #efe6d0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E"),
+    radial-gradient(120% 60% at 50% 0%, #fbf6e9 0%, #efe6d0 55%, #e4d8bd 100%);
+  background-blend-mode: multiply, normal;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    inset 0 0 60px rgba(139, 94, 40, 0.12),
+    inset 0 0 0 1px rgba(58, 36, 18, 0.3);
+  padding: 38px 42px;
+  overflow: hidden;
+}
 
 .modal-portrait {
   display: block;
