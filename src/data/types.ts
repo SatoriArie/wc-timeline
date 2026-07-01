@@ -123,6 +123,12 @@ export interface MapPin {
   y?: number;
 }
 
+/** Запись главы/участника фракции: ссылка на персонажа + флаг "бывший". */
+export interface OrgMember {
+  id: string;
+  former?: boolean;
+}
+
 /** Фракция / орден / организация (редактируемая сущность). */
 export interface Organization {
   id: string;
@@ -135,6 +141,12 @@ export interface Organization {
   note: string;
   /** Цветовой акцент */
   color: string;
+  /** Герб/эмблема — путь к изображению (как character.portrait) */
+  emblem?: string;
+  /** Глава(ы) фракции — курируется вручную, с учётом бывших */
+  leaders: OrgMember[];
+  /** Состав фракции — курируется вручную, с учётом бывших */
+  members: OrgMember[];
 }
 
 export type PageId = 'events' | 'characters' | 'zones' | 'organizations';

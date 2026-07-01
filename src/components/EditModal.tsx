@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type {
   Character,
   Organization,
+  OrgMember,
   PageId,
   Relation,
   RelationKind,
@@ -11,6 +12,7 @@ import type {
   Zone,
   ZoneChronicle,
 } from '../data/types';
+import { assetUrl } from '../utils/asset';
 import {
   eraOrder,
   regionOrder,
@@ -64,6 +66,8 @@ export default function EditModal({
   const [sources, setSources] = useState<SourceRef[]>([]);
   const [zoneChronicle, setZoneChronicle] = useState<ZoneChronicle[]>([]);
   const [relations, setRelations] = useState<Relation[]>([]);
+  const [orgLeaders, setOrgLeaders] = useState<OrgMember[]>([]);
+  const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +122,10 @@ export default function EditModal({
         domain: o?.domain ?? '',
         note: o?.note ?? '',
         color: o?.color ?? '#b58b4a',
+        emblem: o?.emblem ?? '',
       });
+      setOrgLeaders(o?.leaders?.length ? o.leaders.map((m) => ({ ...m })) : []);
+      setOrgMembers(o?.members?.length ? o.members.map((m) => ({ ...m })) : []);
     }
   }, [open, item, type]);
 
@@ -184,6 +191,9 @@ export default function EditModal({
         domain: form.domain,
         note: form.note,
         color: form.color || '#b58b4a',
+        emblem: form.emblem,
+        leaders: orgLeaders.filter((m) => m.id),
+        members: orgMembers.filter((m) => m.id),
       } satisfies Organization;
     }
     onSave(result);
@@ -275,6 +285,20 @@ export default function EditModal({
                 onChange={(e) => set('color', e.target.value)}
               />
             </label>
+            <Field label="Герб (URL)" value={form.emblem} onChange={(v) => set('emblem', v)} />
+            {form.emblem && <img className="emblem-preview" src={assetUrl(form.emblem)} alt="" />}
+            <MemberPickerEditor
+              label="Глава(ы) фракции"
+              members={orgLeaders}
+              onChange={setOrgLeaders}
+              characters={allCharacters}
+            />
+            <MemberPickerEditor
+              label="Состав фракции"
+              members={orgMembers}
+              onChange={setOrgMembers}
+              characters={allCharacters}
+            />
           </>
         )}
 
@@ -533,6 +557,60 @@ function RelationsEditor({
         ))}
         <button type="button" className="source-add" onClick={add}>
           + Добавить связь
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MemberPickerEditor({
+  label,
+  members,
+  onChange,
+  characters,
+}: {
+  label: string;
+  members: OrgMember[];
+  onChange: (m: OrgMember[]) => void;
+  characters: Character[];
+}) {
+  const update = (i: number, patch: Partial<OrgMember>) =>
+    onChange(members.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
+  const remove = (i: number) => onChange(members.filter((_, idx) => idx !== i));
+  const add = () => onChange([...members, { id: characters[0]?.id ?? '' }]);
+
+  return (
+    <div className="form-row">
+      <span>{label}</span>
+      <div className="source-editor">
+        {members.map((m, i) => (
+          <div className="rel-row" key={i}>
+            <select
+              className="source-type rel-row-char"
+              value={m.id}
+              onChange={(e) => update(i, { id: e.target.value })}
+            >
+              {characters.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <label className="member-former-toggle">
+              <input
+                type="checkbox"
+                checked={!!m.former}
+                onChange={(e) => update(i, { former: e.target.checked || undefined })}
+              />
+              Бывший
+            </label>
+            <button type="button" className="source-del" onClick={() => remove(i)} title="Удалить">
+              ✕
+            </button>
+          </div>
+        ))}
+        <button type="button" className="source-add" onClick={add}>
+          + Добавить
         </button>
       </div>
     </div>

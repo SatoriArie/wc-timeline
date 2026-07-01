@@ -7,6 +7,7 @@ export type {
   SourceType,
   ZoneChronicle,
   Organization,
+  OrgMember,
   Relation,
   RelationKind,
   PageId,

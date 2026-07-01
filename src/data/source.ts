@@ -1,4 +1,4 @@
-import type { Character, MapPin, Organization, TimelineEvent, Zone } from './types';
+import type { Character, MapPin, Organization, OrgMember, TimelineEvent, Zone } from './types';
 import { supabase, isCloud } from './supabase';
 
 // Источник данных. Читает из Supabase (если настроен), иначе — статические JSON
@@ -101,6 +101,12 @@ function normZone(z: LegacyZone): Zone {
       : {}),
   };
 }
+function normOrgMember(m: unknown): OrgMember | null {
+  if (!m || typeof m !== 'object') return null;
+  const id = (m as Partial<OrgMember>).id;
+  if (typeof id !== 'string' || !id) return null;
+  return (m as Partial<OrgMember>).former ? { id, former: true } : { id };
+}
 function normOrg(o: Partial<Organization>): Organization {
   return {
     id: String(o.id ?? cryptoId()),
@@ -109,6 +115,13 @@ function normOrg(o: Partial<Organization>): Organization {
     domain: o.domain ?? '',
     note: o.note ?? '',
     color: o.color ?? '#b58b4a',
+    emblem: o.emblem ?? '',
+    leaders: arr<unknown>(o.leaders)
+      .map(normOrgMember)
+      .filter((m): m is OrgMember => m !== null),
+    members: arr<unknown>(o.members)
+      .map(normOrgMember)
+      .filter((m): m is OrgMember => m !== null),
   };
 }
 const MAP_CATS = new Set([
