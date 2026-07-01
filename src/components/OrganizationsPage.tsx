@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import type { Organization } from '../data/types';
 import { categoryMeta, orgCategoryOrder } from '../data';
+import { assetUrl } from '../utils/asset';
 
 interface Props {
   organizations: Organization[];
@@ -74,7 +75,11 @@ export default function OrganizationsPage({
                   onClick={() => onSelect(o)}
                   style={{ ['--mc' as string]: o.color || meta.accent }}
                 >
-                  <span className="member-glyph">{o.name.charAt(0)}</span>
+                  {o.emblem ? (
+                    <img className="member-emblem-img" src={assetUrl(o.emblem)} alt={o.name} />
+                  ) : (
+                    <span className="member-glyph">{o.name.charAt(0)}</span>
+                  )}
                   <div className="member-body">
                     <h3 className="member-name">{o.name}</h3>
                     <span className="member-domain">{o.domain}</span>
