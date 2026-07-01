@@ -88,8 +88,10 @@ function FitBounds() {
     // Перефитим, пока лэйаут дособирается (ленивая загрузка/полноширинный канвас),
     // и прекращаем, как только пользователь сам тронул карту.
     let userMoved = false;
+    let programmatic = false;
+    // наш собственный setView не должен считаться «пользователь тронул карту»
     const onUser = () => {
-      userMoved = true;
+      if (!programmatic) userMoved = true;
     };
     const SNAP = 0.25; // = zoomSnap
     const fit = () => {
@@ -99,8 +101,10 @@ function FitBounds() {
       // округляем ВВЕРХ до сетки snap, иначе zoomSnap округлит вниз и карта не покроет канвас
       const zCover = Math.ceil(Math.log2(Math.max(s.x / W, s.y / H)) / SNAP) * SNAP;
       const zContain = Math.floor(Math.log2(Math.min(s.x / W, s.y / H)) / SNAP) * SNAP;
+      programmatic = true;
       map.setMinZoom(zContain - SNAP);
       map.setView([H / 2, W / 2], zCover, { animate: false });
+      programmatic = false;
     };
     const boot = () => {
       map.invalidateSize();
@@ -125,7 +129,8 @@ function FitBounds() {
 function FlyTo({ target }: { target: { x: number; y: number; k: number } | null }) {
   const map = useMap();
   useEffect(() => {
-    if (target) map.flyTo(at(target.x, target.y), Math.max(map.getZoom(), 0.5), { duration: 0.6 });
+    // фокус на зоне: умеренный зум (а не максимальный), если ещё не приближено
+    if (target) map.flyTo(at(target.x, target.y), Math.max(map.getZoom(), -1), { duration: 0.6 });
   }, [target, map]);
   return null;
 }
@@ -243,10 +248,10 @@ export default function MapPage({
     [allPins, enabled, minScore],
   );
 
-  // счётчик точек по зонам
+  // счётчик контент-точек по зонам (сам пин зоны не считаем)
   const pinsPerZone = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const p of allPins) m[p.pin.zone] = (m[p.pin.zone] ?? 0) + 1;
+    for (const p of allPins) if (!p.isZone) m[p.pin.zone] = (m[p.pin.zone] ?? 0) + 1;
     return m;
   }, [allPins]);
 
@@ -663,7 +668,7 @@ export default function MapPage({
                   <span className="map-zone-card-name">{z.name}</span>
                   <span className="map-zone-card-region">
                     {z.region}
-                    {cnt > 1 && <span className="map-zone-card-pins"> · {pts(cnt)}</span>}
+                    {cnt > 0 && <span className="map-zone-card-pins"> · {pts(cnt)}</span>}
                     {z.poly && z.poly.length >= 3 && <span className="map-zone-card-poly"> · контур ✓</span>}
                   </span>
                   {editMode && (

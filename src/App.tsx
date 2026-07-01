@@ -221,6 +221,7 @@ export default function App() {
     if (page === 'events') downloadJson('events.json', c.events);
     else if (page === 'characters') downloadJson('characters.json', c.characters);
     else if (page === 'zones') downloadJson('zones.json', c.zones);
+    else if (page === 'map') downloadJson('pins.json', c.pins);
     else downloadJson('organizations.json', c.organizations);
   };
 
@@ -230,6 +231,7 @@ export default function App() {
       if (page === 'events') c.setEvents(data as TimelineEvent[]);
       else if (page === 'characters') c.setCharacters(data as Character[]);
       else if (page === 'zones') c.setZones(data as Zone[]);
+      else if (page === 'map') c.setPins(data as unknown as MapPin[]);
       else c.setOrganizations(data as Organization[]);
     } catch {
       alert('Не удалось прочитать JSON-файл.');
@@ -243,7 +245,9 @@ export default function App() {
         ? 'characters.json'
         : page === 'zones'
           ? 'zones.json'
-          : 'organizations.json';
+          : page === 'map'
+            ? 'pins.json'
+            : 'organizations.json';
 
   // переплетение лора: персонаж ↔ событие
   const crossRefs = useMemo(() => computeCrossRefs(c.events, c.characters), [c.events, c.characters]);
@@ -454,7 +458,7 @@ export default function App() {
       </nav>
 
       <div className="page-container">
-        {editMode && isData && (
+        {editMode && (isData || page === 'map') && (
           <div className="edit-banner">
             <span>Режим редактирования.</span>
 
@@ -591,7 +595,7 @@ export default function App() {
               zones={c.zones}
               pins={c.pins}
               editMode={editMode}
-              onZone={openForView.zones}
+              onZone={(z) => setActiveZone(z)}
               onPlaceZone={saveZoneCoords}
               onSavePoly={saveZonePoly}
               onSavePin={savePin}
